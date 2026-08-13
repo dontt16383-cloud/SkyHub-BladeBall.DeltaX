@@ -1,0 +1,2777 @@
+-- ========================================
+-- SKYHUB BLADE BALL EDITION
+-- Адаптировано под игру Blade Ball
+-- Автор: dont16383
+-- ========================================
+
+local Players = game:GetService("Players")
+local RunService = game:GetService("RunService")
+local Workspace = game:GetService("Workspace")
+local UserInputService = game:GetService("UserInputService")
+local TweenService = game:GetService("TweenService")
+local Lighting = game:GetService("Lighting")
+local ReplicatedStorage = game:GetService("ReplicatedStorage")
+local ContentProvider = game:GetService("ContentProvider")
+local MaterialService = game:GetService("MaterialService")
+local LocalPlayer = Players.LocalPlayer
+local Camera = workspace.CurrentCamera
+local PlayerGui = LocalPlayer:WaitForChild("PlayerGui")
+
+-- ========================================
+-- ЗАГРУЗОЧНЫЙ ЭКРАН
+-- ========================================
+local LoadGui = Instance.new("ScreenGui")
+LoadGui.Name = "LoadGui"
+LoadGui.ResetOnSpawn = false
+LoadGui.IgnoreGuiInset = true
+LoadGui.Parent = PlayerGui
+
+local LoadBg = Instance.new("Frame")
+LoadBg.Size = UDim2.new(1, 0, 1, 0)
+LoadBg.BackgroundColor3 = Color3.fromRGB(10, 10, 15)
+LoadBg.BorderSizePixel = 0
+LoadBg.Parent = LoadGui
+
+local LoadLogo = Instance.new("TextLabel")
+LoadLogo.Size = UDim2.new(0, 300, 0, 100)
+LoadLogo.Position = UDim2.new(0.5, -150, 0.4, -50)
+LoadLogo.AnchorPoint = Vector2.new(0.5, 0.5)
+LoadLogo.BackgroundTransparency = 1
+LoadLogo.Text = "S"
+LoadLogo.TextColor3 = Color3.fromRGB(160, 80, 255)
+LoadLogo.Font = Enum.Font.GothamBlack
+LoadLogo.TextSize = 100
+LoadLogo.Parent = LoadBg
+
+local LoadTitle = Instance.new("TextLabel")
+LoadTitle.Size = UDim2.new(0, 400, 0, 50)
+LoadTitle.Position = UDim2.new(0.5, -200, 0.5, -25)
+LoadTitle.AnchorPoint = Vector2.new(0.5, 0.5)
+LoadTitle.BackgroundTransparency = 1
+LoadTitle.Text = "SKYHUB"
+LoadTitle.TextColor3 = Color3.new(1, 1, 1)
+LoadTitle.Font = Enum.Font.GothamBold
+LoadTitle.TextSize = 28
+LoadTitle.Parent = LoadBg
+
+local LoadBarBack = Instance.new("Frame")
+LoadBarBack.Size = UDim2.new(0, 350, 0, 8)
+LoadBarBack.Position = UDim2.new(0.5, -175, 0.6, 0)
+LoadBarBack.AnchorPoint = Vector2.new(0.5, 0.5)
+LoadBarBack.BackgroundColor3 = Color3.fromRGB(35, 35, 42)
+LoadBarBack.BorderSizePixel = 0
+LoadBarBack.Parent = LoadBg
+Instance.new("UICorner", LoadBarBack).CornerRadius = UDim.new(1, 0)
+
+local LoadBar = Instance.new("Frame")
+LoadBar.Size = UDim2.new(0, 0, 1, 0)
+LoadBar.BackgroundColor3 = Color3.fromRGB(145, 70, 255)
+LoadBar.BorderSizePixel = 0
+LoadBar.Parent = LoadBarBack
+Instance.new("UICorner", LoadBar).CornerRadius = UDim.new(1, 0)
+
+local LoadText = Instance.new("TextLabel")
+LoadText.Size = UDim2.new(0, 400, 0, 30)
+LoadText.Position = UDim2.new(0.5, -200, 0.66, 0)
+LoadText.AnchorPoint = Vector2.new(0.5, 0.5)
+LoadText.BackgroundTransparency = 1
+LoadText.Text = "Loading SkyHub..."
+LoadText.TextColor3 = Color3.fromRGB(170, 170, 180)
+LoadText.Font = Enum.Font.Gotham
+LoadText.TextSize = 14
+LoadText.Parent = LoadBg
+
+-- Анимация загрузки
+for i = 1, 100 do
+    LoadBar.Size = UDim2.new(i/100, 0, 1, 0)
+    LoadText.Text = "Loading SkyHub... "..i.."%"
+    task.wait(0.01)
+end
+task.wait(0.3)
+
+-- ========================================
+-- УДАЛЯЕМ СТАРЫЕ GUI
+-- ========================================
+if PlayerGui:FindFirstChild("SkyHub") then PlayerGui.SkyHub:Destroy() end
+if PlayerGui:FindFirstChild("SkyHubOverlay") then PlayerGui.SkyHubOverlay:Destroy() end
+
+-- ========================================
+-- ТЕМА И ШРИФТЫ
+-- ========================================
+local Theme = {
+    Background = Color3.fromRGB(15, 15, 18),
+    Card = Color3.fromRGB(22, 22, 27),
+    Element = Color3.fromRGB(30, 30, 37),
+    Accent = Color3.fromRGB(145, 70, 255),
+    Text = Color3.fromRGB(240, 240, 245),
+    SubText = Color3.fromRGB(130, 130, 145),
+    Stroke = Color3.fromRGB(38, 38, 46),
+    Danger = Color3.fromRGB(255, 60, 60),
+    Success = Color3.fromRGB(60, 220, 100),
+}
+local Font = Enum.Font.GothamMedium
+local FontBold = Enum.Font.GothamBold
+
+-- ========================================
+-- НАСТРОЙКИ
+-- ========================================
+local Settings = {
+    -- Player
+    Speed = 16,
+    JumpPower = 50,
+    CharacterScale = 1,
+    Invisible = false,
+    FlyEnabled = false,
+    FlySpeed = 50,
+    FlyAnimation = false,
+    InfiniteJump = false,
+    NoclipEnabled = false,
+
+    -- ESP
+    BallESP = false,
+    BallColor = Color3.fromRGB(255, 200, 0),
+    PlayerESP = false,
+    PlayerColor = Color3.fromRGB(0, 200, 255),
+
+    -- Visual
+    ChamsEnabled = false,
+    ChamsColor = Color3.fromRGB(138, 43, 226),
+    TracersEnabled = false,
+    TracersColor = Color3.fromRGB(138, 43, 226),
+    JumpCircles = false,
+    JumpCirclesColor = Color3.fromRGB(138, 43, 226),
+    Trails = false,
+    TrailsColor = Color3.fromRGB(138, 43, 226),
+    RGBHumanoid = false,
+    XRayEnabled = false,
+    BloomEnabled = false,
+    ColorCorrectionEnabled = false,
+    VignetteEnabled = false,
+    ChinaHatEnabled = false,
+    ChinaHatStyle = "Classic",
+    ChinaHatRainbow = false,
+    ChinaHatRadius = 2.4,
+    ChinaHatHeight = 1.6,
+    ChinaHatRainbowSpeed = 5,
+    ChinaHatTransparency = 0.3,
+    ChinaHatColor = Color3.fromRGB(0, 255, 255),
+    AuraEnabled = false,
+    AuraColor = Color3.fromRGB(133, 220, 255),
+    OrbizEnabled = false,
+    TexturePackEnabled = false,
+    StretchEnabled = false,
+    StretchFactor = 0.75,
+
+    -- Teleport
+    SavedLobbyPosition = nil,
+    SavedMapPosition = nil,
+    SelectedPlayer = nil,
+
+    -- Fling
+    FlingEnabled = false,
+
+    -- Combat (Blade Ball)
+    AutoParry = false,
+    ParryDelay = 0.15,
+    AutoSpam = false,
+    AutoClash = false,
+    AutoPlay = false,
+    AimbotEnabled = false,
+
+    -- Settings
+    ThemeName = "Purple",
+    Language = "RU",
+    MenuScale = 1,
+
+    -- Дополнительные
+    AntiAFKEnabled = false,
+    BHopEnabled = false,
+    BHopSpeed = 30,
+    SpinBotEnabled = false,
+    SpinBotSpeed = 9999,
+    AntiFlingEnabled = false,
+    WallHopEnabled = false,
+}
+
+local Cache = {
+    FlyKeys = { F = 0, B = 0, L = 0, R = 0 },
+    FlyRunning = false,
+    FlyBodyGyro = nil,
+    FlyBodyVelocity = nil,
+    FlyConn = nil,
+    FlyKeyConn = nil,
+    FlyKeyEndConn = nil,
+    Highlights = {},
+    ChamsPartsList = {},
+    PostEffects = {},
+    JumpTracking = { wasJumping = false },
+    RGBConnection = nil,
+    CurrentTween = nil,
+    XRayParts = {},
+    Tracers = {},
+    TrailAttachments = {},
+    MainConn = nil,
+    WallHopConnection = nil,
+    ChinaHatParts = {},
+    ChinaHatConnection = nil,
+    TextureState = {},
+    TextureVariantsBuilt = false,
+    AuraParticles = {},
+    AuraCache = {},
+    JerkConnection = nil,
+    SpinConn = nil,
+    OrbizFolder = nil,
+    OrbizParticles = {},
+    OrbizConnection = nil,
+    afkConn = nil,
+    noclipConn = nil,
+    BHopConn = nil,
+    BHopBV = nil,
+    BHopActive = false,
+    AnimTrack = nil,
+    SoundObj = nil,
+    CurrentEmote = nil,
+    SavedMainPosition = nil,
+    CombatConn = nil,
+}
+
+local function safeDisconnect(connection)
+    if connection and typeof(connection) == "RBXScriptConnection" then
+        pcall(function() connection:Disconnect() end)
+    end
+end
+
+local function notify(title, content, duration)
+    pcall(function()
+        game.StarterGui:SetCore("SendNotification", {
+            Title = title,
+            Text = content,
+            Duration = duration or 3,
+        })
+    end)
+end
+
+local function hexToRGB(hex)
+    hex = hex:gsub("#", "")
+    if #hex == 6 then
+        return Color3.fromRGB(
+            tonumber("0x" .. hex:sub(1, 2)) or 255,
+            tonumber("0x" .. hex:sub(3, 4)) or 255,
+            tonumber("0x" .. hex:sub(5, 6)) or 255
+        )
+    end
+    return Color3.fromRGB(255, 255, 255)
+end
+
+local function colorInputToColor3(value)
+    if value:match("^#%x%x%x%x%x%x$") then
+        return hexToRGB(value)
+    end
+    local parts = {}
+    for part in value:gmatch("[^,]+") do
+        table.insert(parts, tonumber(part))
+    end
+    if #parts == 3 then
+        return Color3.fromRGB(parts[1], parts[2], parts[3])
+    end
+    return nil
+end
+
+-- ========================================
+-- ВСПОМОГАТЕЛЬНЫЕ ФУНКЦИИ ДЛЯ BLADE BALL
+-- ========================================
+local function getBall()
+    for _, obj in ipairs(Workspace:GetDescendants()) do
+        if obj:IsA("BasePart") and obj.Name:lower():find("ball") then
+            return obj
+        end
+    end
+    return nil
+end
+
+local function getClosestPlayer()
+    local myRoot = LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("HumanoidRootPart")
+    if not myRoot then return nil
+    local best, bestDist = nil, math.huge
+    for _, player in ipairs(Players:GetPlayers()) do
+        if player == LocalPlayer then continue end
+        local root = player.Character and player.Character:FindFirstChild("HumanoidRootPart")
+        if root then
+            local dist = (myRoot.Position - root.Position).Magnitude
+            if dist < bestDist then
+                bestDist = dist
+                best = player
+            end
+        end
+    end
+    return best
+end
+
+local function parry()
+    -- Эмуляция нажатия кнопки отбивания (обычно это левая кнопка мыши или клавиша F)
+    -- На мобильных устройствах это будет срабатывать через touch
+    local mouse = game:GetService("Players").LocalPlayer:GetMouse()
+    if mouse then
+        pcall(function()
+            mouse:Button1Down()
+            task.wait(0.05)
+            mouse:Button1Up()
+        end)
+    end
+    -- Альтернатива: используем VirtualInputManager, если он доступен
+    pcall(function()
+        local VIM = game:GetService("VirtualInputManager")
+        VIM:SendKeyEvent(true, Enum.KeyCode.F, false, game)
+        task.wait(0.05)
+        VIM:SendKeyEvent(false, Enum.KeyCode.F, false, game)
+    end)
+end
+
+-- ========================================
+-- ПОЛЁТ (полностью рабочий)
+-- ========================================
+local function stopFly()
+    Cache.FlyRunning = false
+    if Cache.FlyBodyGyro then pcall(function() Cache.FlyBodyGyro:Destroy() end); Cache.FlyBodyGyro = nil end
+    if Cache.FlyBodyVelocity then pcall(function() Cache.FlyBodyVelocity:Destroy() end); Cache.FlyBodyVelocity = nil end
+    if LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("Humanoid") then
+        LocalPlayer.Character.Humanoid.PlatformStand = false
+    end
+    Cache.FlyKeys = { F = 0, B = 0, L = 0, R = 0 }
+    safeDisconnect(Cache.FlyConn); Cache.FlyConn = nil
+end
+
+local function startFly()
+    if Cache.FlyRunning then return end
+    local character = LocalPlayer.Character
+    if not character then return end
+    local torso = character:FindFirstChild("Torso") or character:FindFirstChild("UpperTorso")
+    if not torso then return end
+
+    Cache.FlyRunning = true
+    Cache.FlyKeys = { F = 0, B = 0, L = 0, R = 0 }
+
+    Cache.FlyBodyGyro = Instance.new("BodyGyro", torso)
+    Cache.FlyBodyGyro.P = 9e4
+    Cache.FlyBodyGyro.maxTorque = Vector3.new(9e9, 9e9, 9e9)
+    Cache.FlyBodyGyro.cframe = torso.CFrame
+
+    Cache.FlyBodyVelocity = Instance.new("BodyVelocity", torso)
+    Cache.FlyBodyVelocity.velocity = Vector3.new(0, 0.1, 0)
+    Cache.FlyBodyVelocity.maxForce = Vector3.new(9e9, 9e9, 9e9)
+
+    character.Humanoid.PlatformStand = true
+
+    safeDisconnect(Cache.FlyConn)
+    Cache.FlyConn = RunService.RenderStepped:Connect(function()
+        if not Cache.FlyRunning or not LocalPlayer.Character then
+            stopFly()
+            return
+        end
+        local camera = workspace.CurrentCamera
+        local forward = camera.CFrame.LookVector
+        local right = camera.CFrame.RightVector
+        local move = Vector3.new(
+            (Cache.FlyKeys.R - Cache.FlyKeys.L) * right.X + (Cache.FlyKeys.F - Cache.FlyKeys.B) * forward.X,
+            (Cache.FlyKeys.R - Cache.FlyKeys.L) * right.Y + (Cache.FlyKeys.F - Cache.FlyKeys.B) * forward.Y,
+            (Cache.FlyKeys.R - Cache.FlyKeys.L) * right.Z + (Cache.FlyKeys.F - Cache.FlyKeys.B) * forward.Z
+        ) * Settings.FlySpeed
+        if move.Magnitude > 0 then
+            Cache.FlyBodyVelocity.velocity = move
+        else
+            Cache.FlyBodyVelocity.velocity = Vector3.new(0, 0.1, 0)
+        end
+        Cache.FlyBodyGyro.cframe = camera.CFrame
+    end)
+
+    notify("Fly", "Включен (WASD)", 2)
+end
+
+local function setupFlyKeys()
+    safeDisconnect(Cache.FlyKeyConn)
+    safeDisconnect(Cache.FlyKeyEndConn)
+
+    Cache.FlyKeyConn = UserInputService.InputBegan:Connect(function(input, gameProcessed)
+        if gameProcessed or not Cache.FlyRunning then return end
+        local key = input.KeyCode
+        if key == Enum.KeyCode.W then
+            Cache.FlyKeys.F = 1
+        elseif key == Enum.KeyCode.S then
+            Cache.FlyKeys.B = 1
+        elseif key == Enum.KeyCode.A then
+            Cache.FlyKeys.L = 1
+        elseif key == Enum.KeyCode.D then
+            Cache.FlyKeys.R = 1
+        end
+    end)
+
+    Cache.FlyKeyEndConn = UserInputService.InputEnded:Connect(function(input, gameProcessed)
+        if gameProcessed or not Cache.FlyRunning then return end
+        local key = input.KeyCode
+        if key == Enum.KeyCode.W then
+            Cache.FlyKeys.F = 0
+        elseif key == Enum.KeyCode.S then
+            Cache.FlyKeys.B = 0
+        elseif key == Enum.KeyCode.A then
+            Cache.FlyKeys.L = 0
+        elseif key == Enum.KeyCode.D then
+            Cache.FlyKeys.R = 0
+        end
+    end)
+end
+setupFlyKeys()
+
+-- ========================================
+-- BHOP
+-- ========================================
+local function stopBHop()
+    Cache.BHopActive = false
+    safeDisconnect(Cache.BHopConn); Cache.BHopConn = nil
+    if Cache.BHopBV then pcall(function() Cache.BHopBV:Destroy() end); Cache.BHopBV = nil end
+end
+
+local function startBHop()
+    if not LocalPlayer.Character then return end
+    if Cache.BHopActive then stopBHop() end
+
+    local character = LocalPlayer.Character
+    local humanoid = character:FindFirstChildOfClass("Humanoid")
+    local rootPart = character:FindFirstChild("HumanoidRootPart")
+    if not humanoid or not rootPart then return end
+
+    Cache.BHopActive = true
+    Cache.BHopBV = Instance.new("BodyVelocity")
+    Cache.BHopBV.MaxForce = Vector3.new(1e5, 0, 1e5)
+    Cache.BHopBV.Velocity = Vector3.new(0, 0, 0)
+    Cache.BHopBV.Parent = rootPart
+
+    local lastJump = 0
+    Cache.BHopConn = RunService.Stepped:Connect(function()
+        if not Cache.BHopActive then stopBHop(); return end
+        local character = LocalPlayer.Character
+        if not character then return end
+        local humanoid = character:FindFirstChildOfClass("Humanoid")
+        local rootPart = character:FindFirstChild("HumanoidRootPart")
+        if not humanoid or not rootPart then return end
+
+        if not Cache.BHopBV or not Cache.BHopBV.Parent then
+            Cache.BHopBV = Instance.new("BodyVelocity")
+            Cache.BHopBV.MaxForce = Vector3.new(1e5, 0, 1e5)
+            Cache.BHopBV.Velocity = Vector3.new(0, 0, 0)
+            Cache.BHopBV.Parent = rootPart
+        end
+
+        local moveDirection = humanoid.MoveDirection
+        local isMoving = moveDirection.Magnitude > 0.1
+        local state = humanoid:GetState()
+        local onGround = (state == Enum.HumanoidStateType.Running or
+                          state == Enum.HumanoidStateType.Landed or
+                          state == Enum.HumanoidStateType.RunningNoPhysics)
+
+        if isMoving then
+            local horizontal = Vector3.new(moveDirection.X, 0, moveDirection.Z)
+            if horizontal.Magnitude > 0.01 then
+                Cache.BHopBV.Velocity = horizontal.Unit * Settings.BHopSpeed
+            end
+            if onGround and tick() - lastJump > 0.15 then
+                humanoid:ChangeState(Enum.HumanoidStateType.Jumping)
+                lastJump = tick()
+            end
+        else
+            Cache.BHopBV.Velocity = Vector3.new(0, 0, 0)
+        end
+    end)
+
+    notify("BHop", "Включен", 2)
+end
+
+-- ========================================
+-- SPIN BOT
+-- ========================================
+local SpinBot = { Enabled = false, Speed = 9999 }
+
+local function setupSpinBot()
+    safeDisconnect(Cache.SpinConn)
+    Cache.SpinConn = nil
+    if not SpinBot.Enabled then return end
+
+    Cache.SpinConn = RunService.Heartbeat:Connect(function(deltaTime)
+        if not LocalPlayer.Character then return end
+        local rootPart = LocalPlayer.Character:FindFirstChild("HumanoidRootPart")
+        if rootPart then
+            rootPart.CFrame = rootPart.CFrame * CFrame.Angles(0, math.rad(SpinBot.Speed * deltaTime), 0)
+        end
+    end)
+end
+
+-- ========================================
+-- NOCLIP
+-- ========================================
+local function setupNoclip(value)
+    if value then
+        if not Cache.noclipConn then
+            Cache.noclipConn = RunService.Stepped:Connect(function()
+                if not LocalPlayer.Character then return end
+                for _, part in ipairs(LocalPlayer.Character:GetDescendants()) do
+                    if part:IsA("BasePart") then
+                        part.CanCollide = false
+                    end
+                end
+            end)
+        end
+    else
+        if Cache.noclipConn then
+            Cache.noclipConn:Disconnect()
+            Cache.noclipConn = nil
+        end
+    end
+end
+
+-- ========================================
+-- WALL HOP
+-- ========================================
+local function setupWallHop()
+    safeDisconnect(Cache.WallHopConnection)
+    Cache.WallHopConnection = nil
+    if not Settings.WallHopEnabled then return end
+
+    Cache.WallHopConnection = RunService.Heartbeat:Connect(function()
+        if not LocalPlayer.Character then return end
+        local humanoid = LocalPlayer.Character:FindFirstChildOfClass("Humanoid")
+        if not humanoid then return end
+        if UserInputService:IsKeyDown(Enum.KeyCode.Space) then
+            humanoid:ChangeState(Enum.HumanoidStateType.Jumping)
+        end
+    end)
+end
+
+-- ========================================
+-- ANTI FLING
+-- ========================================
+local function setupAntiFling()
+    safeDisconnect(Cache.antiFlingConn)
+    Cache.antiFlingConn = nil
+    if not Settings.AntiFlingEnabled then return end
+
+    Cache.antiFlingConn = RunService.Heartbeat:Connect(function()
+        if not Settings.AntiFlingEnabled then return end
+
+        for _, player in ipairs(Players:GetPlayers()) do
+            if player ~= LocalPlayer and player.Character then
+                for _, part in ipairs(player.Character:GetDescendants()) do
+                    if part:IsA("BasePart") and part.CanCollide then
+                        part.CanCollide = false
+                    end
+                end
+            end
+        end
+
+        local character = LocalPlayer.Character
+        if not character then return end
+        local rootPart = character:FindFirstChild("HumanoidRootPart")
+        if not rootPart then return end
+
+        if rootPart.AssemblyLinearVelocity.Magnitude > 200 then
+            rootPart.AssemblyLinearVelocity = Vector3.new(0, 0, 0)
+        end
+        if rootPart.AssemblyAngularVelocity.Magnitude > 20 then
+            rootPart.AssemblyAngularVelocity = Vector3.new(0, 0, 0)
+        end
+    end)
+end
+
+-- ========================================
+-- ANTI AFK
+-- ========================================
+local function setupAntiAFK()
+    safeDisconnect(Cache.afkConn)
+    Cache.afkConn = nil
+    if not Settings.AntiAFKEnabled then return end
+
+    local lastAction = 0
+    Cache.afkConn = RunService.Heartbeat:Connect(function()
+        if not LocalPlayer.Character then return end
+        local now = tick()
+        if now - lastAction > 60 then
+            local humanoid = LocalPlayer.Character:FindFirstChildOfClass("Humanoid")
+            if humanoid then
+                humanoid.Jump = true
+                lastAction = now
+            end
+        end
+    end)
+end
+
+-- ========================================
+-- ESP (универсальный)
+-- ========================================
+local function createOrUpdateHighlight(target, color, name)
+    if not target then return end
+    local highlight = target:FindFirstChild("SkyHubESP")
+    if not highlight then
+        highlight = Instance.new("Highlight")
+        highlight.Name = "SkyHubESP"
+        highlight.DepthMode = Enum.HighlightDepthMode.AlwaysOnTop
+        highlight.Parent = target
+    end
+    highlight.FillColor = color
+    highlight.OutlineColor = color
+    highlight.FillTransparency = 0.4
+    highlight.OutlineTransparency = 0
+    highlight.Enabled = true
+    return highlight
+end
+
+local function removeHighlight(target)
+    if not target then return end
+    local highlight = target:FindFirstChild("SkyHubESP")
+    if highlight then
+        pcall(function() highlight:Destroy() end)
+    end
+end
+
+local function clearAllHighlights()
+    for _, obj in ipairs(Workspace:GetDescendants()) do
+        if obj:FindFirstChild("SkyHubESP") then
+            pcall(function() obj.SkyHubESP:Destroy() end)
+        end
+    end
+end
+
+-- ========================================
+-- CHAMS
+-- ========================================
+local function cacheCharacterParts(player)
+    if not player or not player.Character then return end
+    local list = {}
+    for _, part in ipairs(player.Character:GetDescendants()) do
+        if part:IsA("BasePart") and part.Name ~= "HumanoidRootPart" then
+            list[part] = {
+                ogMaterial = part.Material,
+                ogColor = part.Color,
+                ogTransparency = part.Transparency,
+                ogCastShadow = part.CastShadow,
+            }
+        end
+    end
+    Cache.ChamsPartsList[player.UserId] = list
+end
+
+local function applyChams(player)
+    if not player or not player.Character then return end
+    local character = player.Character
+    if not Cache.ChamsPartsList[player.UserId] then
+        cacheCharacterParts(player)
+    end
+    local chamsColor = Settings.ChamsColor
+    for _, part in ipairs(character:GetDescendants()) do
+        if part:IsA("BasePart") and part.Name ~= "HumanoidRootPart" then
+            if not Cache.ChamsPartsList[player.UserId] then
+                Cache.ChamsPartsList[player.UserId] = {}
+            end
+            if not Cache.ChamsPartsList[player.UserId][part] then
+                Cache.ChamsPartsList[player.UserId][part] = {
+                    ogMaterial = part.Material,
+                    ogColor = part.Color,
+                    ogTransparency = part.Transparency,
+                    ogCastShadow = part.CastShadow,
+                }
+            end
+            part.Material = Enum.Material.ForceField
+            part.Color = chamsColor
+            part.Transparency = 0.0
+            part.CastShadow = false
+        end
+    end
+end
+
+local function removeChams(player)
+    if not player or not player.Character then return end
+    local character = player.Character
+    local list = Cache.ChamsPartsList[player.UserId]
+    if not list then return end
+    for part, data in pairs(list) do
+        if part and part.Parent then
+            pcall(function()
+                part.Material = data.ogMaterial
+                part.Color = data.ogColor
+                part.Transparency = data.ogTransparency
+                part.CastShadow = data.ogCastShadow
+            end)
+        end
+    end
+    Cache.ChamsPartsList[player.UserId] = nil
+end
+
+local function clearAllChams()
+    for userId, _ in pairs(Cache.ChamsPartsList) do
+        local player = Players:GetPlayerByUserId(userId)
+        if player then
+            removeChams(player)
+        end
+    end
+    Cache.ChamsPartsList = {}
+end
+
+local function updateChamsForAll()
+    if Settings.ChamsEnabled then
+        for _, player in ipairs(Players:GetPlayers()) do
+            cacheCharacterParts(player)
+            applyChams(player)
+        end
+    else
+        clearAllChams()
+    end
+end
+
+-- ========================================
+-- TRACERS (отключены на телефоне)
+-- ========================================
+local function clearAllTracers()
+    Cache.Tracers = {}
+end
+local function updateTracers() end
+local function createTracer(player) end
+
+-- ========================================
+-- TRAILS
+-- ========================================
+local function createLocalPlayerTrail()
+    local character = LocalPlayer.Character
+    if not character then return end
+    local rootPart = character:FindFirstChild("HumanoidRootPart")
+    if not rootPart then return end
+    if Cache.TrailAttachments.trail and Cache.TrailAttachments.trail.Parent then return end
+
+    local attachment1 = Instance.new("Attachment")
+    attachment1.Position = Vector3.new(-1, 0, 0)
+    attachment1.Parent = rootPart
+
+    local attachment2 = Instance.new("Attachment")
+    attachment2.Position = Vector3.new(1, 0, 0)
+    attachment2.Parent = rootPart
+
+    local trail = Instance.new("Trail")
+    trail.Attachment0 = attachment1
+    trail.Attachment1 = attachment2
+    trail.Lifetime = 0.8
+    trail.MinLength = 0
+    trail.FaceCamera = true
+    trail.LightEmission = 1
+    trail.LightInfluence = 0
+    trail.Transparency = NumberSequence.new({
+        NumberSequenceKeypoint.new(0, 0),
+        NumberSequenceKeypoint.new(1, 1)
+    })
+    trail.Color = ColorSequence.new(Settings.TrailsColor)
+    trail.Parent = rootPart
+
+    Cache.TrailAttachments = {
+        trail = trail,
+        att1 = attachment1,
+        att2 = attachment2,
+    }
+end
+
+local function updateTrailColor()
+    if Cache.TrailAttachments.trail then
+        Cache.TrailAttachments.trail.Color = ColorSequence.new(Settings.TrailsColor)
+    end
+end
+
+local function removeLocalPlayerTrail()
+    if Cache.TrailAttachments.trail then
+        pcall(function() Cache.TrailAttachments.trail:Destroy() end)
+    end
+    if Cache.TrailAttachments.att1 then
+        pcall(function() Cache.TrailAttachments.att1:Destroy() end)
+    end
+    if Cache.TrailAttachments.att2 then
+        pcall(function() Cache.TrailAttachments.att2:Destroy() end)
+    end
+    Cache.TrailAttachments = {}
+end
+
+-- ========================================
+-- JUMP CIRCLES
+-- ========================================
+local function getGroundY(position)
+    local raycastParams = RaycastParams.new()
+    raycastParams.FilterType = Enum.RaycastFilterType.Exclude
+    local character = LocalPlayer.Character
+    if character then
+        raycastParams.FilterDescendantsInstances = { character }
+    end
+    local result = Workspace:Raycast(position, Vector3.new(0, -50, 0), raycastParams)
+    if result then
+        return result.Position.Y
+    end
+    return position.Y - 3
+end
+
+local function createJumpCircle(originPos)
+    local groundY = getGroundY(originPos)
+    local ringPos = Vector3.new(originPos.X, groundY + 0.08, originPos.Z)
+
+    local ring = Instance.new("Part")
+    ring.Shape = Enum.PartType.Cylinder
+    ring.Size = Vector3.new(0.08, 0.5, 0.5)
+    ring.Material = Enum.Material.Neon
+    ring.Color = Settings.JumpCirclesColor
+    ring.Transparency = 0
+    ring.Anchored = true
+    ring.CanCollide = false
+    ring.CastShadow = false
+    ring.CFrame = CFrame.new(ringPos) * CFrame.Angles(0, 0, math.rad(90))
+    ring.Parent = Workspace
+
+    local light = Instance.new("PointLight")
+    light.Brightness = 4
+    light.Color = Settings.JumpCirclesColor
+    light.Range = 20
+    light.Parent = ring
+
+    local startTime = tick()
+    local duration = 0.7
+    local connection
+    connection = RunService.Heartbeat:Connect(function()
+        if not ring or not ring.Parent then
+            safeDisconnect(connection)
+            return
+        end
+        local progress = (tick() - startTime) / duration
+        if progress >= 1 then
+            pcall(function() ring:Destroy() end)
+            safeDisconnect(connection)
+            return
+        end
+        local diameter = 0.5 + progress * 6
+        ring.Size = Vector3.new(0.08, diameter, diameter)
+        ring.Transparency = progress
+        ring.CFrame = CFrame.new(ringPos) * CFrame.Angles(0, 0, math.rad(90))
+        light.Brightness = 4 * (1 - progress)
+    end)
+end
+
+local function updateJumpCircles()
+    if not Settings.JumpCircles or not LocalPlayer.Character then return end
+    local humanoid = LocalPlayer.Character:FindFirstChildOfClass("Humanoid")
+    local rootPart = LocalPlayer.Character:FindFirstChild("HumanoidRootPart")
+    if not humanoid or not rootPart then return end
+
+    local isJumping = humanoid:GetState() == Enum.HumanoidStateType.Jumping
+    if isJumping and not Cache.JumpTracking.wasJumping then
+        createJumpCircle(rootPart.Position)
+    end
+    Cache.JumpTracking.wasJumping = isJumping
+end
+
+-- ========================================
+-- RGB HUMANOID
+-- ========================================
+local function setupRGBHumanoid()
+    safeDisconnect(Cache.RGBConnection)
+    Cache.RGBConnection = nil
+    if not Settings.RGBHumanoid then
+        if LocalPlayer.Character then
+            for _, part in ipairs(LocalPlayer.Character:GetDescendants()) do
+                if part:IsA("BasePart") then
+                    part.Material = Enum.Material.Plastic
+                    part.Color = Color3.fromRGB(255, 255, 255)
+                    part.Transparency = 0
+                end
+            end
+        end
+        return
+    end
+
+    Cache.RGBConnection = RunService.Heartbeat:Connect(function()
+        if not LocalPlayer.Character then return end
+        local color = Color3.fromHSV(tick() % 1, 1, 1)
+        for _, part in ipairs(LocalPlayer.Character:GetDescendants()) do
+            if part:IsA("BasePart") and part.Name ~= "HumanoidRootPart" then
+                part.Material = Enum.Material.ForceField
+                part.Color = color
+                part.Transparency = 0.3
+            end
+        end
+    end)
+end
+
+-- ========================================
+-- XRAY
+-- ========================================
+local function setupXRay()
+    if Settings.XRayEnabled then
+        for _, part in ipairs(Workspace:GetDescendants()) do
+            if part:IsA("BasePart") and not part:IsA("Terrain") then
+                Cache.XRayParts[part] = part.LocalTransparencyModifier
+                part.LocalTransparencyModifier = 0.6
+            end
+        end
+    else
+        for part, value in pairs(Cache.XRayParts) do
+            if part and part.Parent then
+                pcall(function() part.LocalTransparencyModifier = value end)
+            end
+        end
+        Cache.XRayParts = {}
+    end
+end
+
+-- ========================================
+-- POST EFFECTS
+-- ========================================
+local function setupBloom(enabled)
+    Lighting.Brightness = enabled and 1.5 or 1
+end
+
+local function setupColorCorrection(enabled)
+    if enabled then
+        Lighting.Ambient = Settings.AuraColor
+        Lighting.OutdoorAmbient = Settings.AuraColor
+    else
+        Lighting.Ambient = Color3.fromRGB(0, 0, 0)
+        Lighting.OutdoorAmbient = Color3.fromRGB(0, 0, 0)
+    end
+end
+
+local function setupVignette(enabled)
+    if enabled then
+        if Cache.PostEffects.vignette then return end
+        local screenGui = Instance.new("ScreenGui")
+        screenGui.Name = "VignetteEffect"
+        screenGui.ResetOnSpawn = false
+        screenGui.IgnoreGuiInset = true
+        local frame = Instance.new("Frame")
+        frame.Size = UDim2.new(1, 0, 1, 0)
+        frame.BackgroundColor3 = Color3.fromRGB(0, 0, 0)
+        frame.BackgroundTransparency = 0.5
+        frame.BorderSizePixel = 0
+        frame.Parent = screenGui
+        screenGui.Parent = LocalPlayer:WaitForChild("PlayerGui")
+        Cache.PostEffects.vignette = screenGui
+    else
+        if Cache.PostEffects.vignette then
+            pcall(function() Cache.PostEffects.vignette:Destroy() end)
+        end
+        Cache.PostEffects.vignette = nil
+    end
+end
+
+-- ========================================
+-- SKYBOX
+-- ========================================
+local SKYBOX_ASSETS = {
+    ["Black Storm"] = { Bk = "rbxassetid://15502511288", Dn = "rbxassetid://15502508460", Ft = "rbxassetid://15502510289", Lf = "rbxassetid://15502507918", Rt = "rbxassetid://15502509398", Up = "rbxassetid://15502511911" },
+    ["HD"] = { Bk = "http://www.roblox.com/asset/?id=16553658937", Dn = "http://www.roblox.com/asset/?id=16553660713", Ft = "http://www.roblox.com/asset/?id=16553662144", Lf = "http://www.roblox.com/asset/?id=16553664042", Rt = "http://www.roblox.com/asset/?id=16553665766", Up = "http://www.roblox.com/asset/?id=16553667750" },
+    ["Snow"] = { Bk = "http://www.roblox.com/asset/?id=155657655", Dn = "http://www.roblox.com/asset/?id=155674246", Ft = "http://www.roblox.com/asset/?id=155657609", Lf = "http://www.roblox.com/asset/?id=155657671", Rt = "http://www.roblox.com/asset/?id=155657619", Up = "http://www.roblox.com/asset/?id=155674931" },
+    ["Blue Space"] = { Bk = "rbxassetid://15536110634", Dn = "rbxassetid://15536112543", Ft = "rbxassetid://15536116141", Lf = "rbxassetid://15536114370", Rt = "rbxassetid://15536118762", Up = "rbxassetid://15536117282" },
+    ["Realistic"] = { Bk = "rbxassetid://653719502", Dn = "rbxassetid://653718790", Ft = "rbxassetid://653719067", Lf = "rbxassetid://653719190", Rt = "rbxassetid://653718931", Up = "rbxassetid://653719321" },
+    ["Stormy"] = { Bk = "http://www.roblox.com/asset/?id=18703245834", Dn = "http://www.roblox.com/asset/?id=18703243349", Ft = "http://www.roblox.com/asset/?id=18703240532", Lf = "http://www.roblox.com/asset/?id=18703237556", Rt = "http://www.roblox.com/asset/?id=18703235430", Up = "http://www.roblox.com/asset/?id=18703232671" },
+    ["Pink"] = { Bk = "rbxassetid://12216109205", Dn = "rbxassetid://12216109875", Ft = "rbxassetid://12216109489", Lf = "rbxassetid://12216110170", Rt = "rbxassetid://12216110471", Up = "rbxassetid://12216108877" },
+    ["Sunset"] = { Bk = "rbxassetid://600830446", Dn = "rbxassetid://600831635", Ft = "rbxassetid://600832720", Lf = "rbxassetid://600886090", Rt = "rbxassetid://600833862", Up = "rbxassetid://600835177" },
+    ["Space"] = { Bk = "http://www.roblox.com/asset/?id=166509999", Dn = "http://www.roblox.com/asset/?id=166510057", Ft = "http://www.roblox.com/asset/?id=166510116", Lf = "http://www.roblox.com/asset/?id=166510092", Rt = "http://www.roblox.com/asset/?id=166510131", Up = "http://www.roblox.com/asset/?id=166510114" },
+    ["Roblox Default"] = { Bk = "rbxasset://textures/sky/sky512_bk.tex", Dn = "rbxasset://textures/sky/sky512_dn.tex", Ft = "rbxasset://textures/sky/sky512_ft.tex", Lf = "rbxasset://textures/sky/sky512_lf.tex", Rt = "rbxasset://textures/sky/sky512_rt.tex", Up = "rbxasset://textures/sky/sky512_up.tex" },
+    ["Red Night"] = { Bk = "http://www.roblox.com/asset/?id=401664839", Dn = "http://www.roblox.com/asset/?id=401664862", Ft = "http://www.roblox.com/asset/?id=401664960", Lf = "http://www.roblox.com/asset/?id=401664881", Rt = "http://www.roblox.com/asset/?id=401664901", Up = "http://www.roblox.com/asset/?id=401664936" },
+    ["Pink Skies"] = { Bk = "http://www.roblox.com/asset/?id=151165214", Dn = "http://www.roblox.com/asset/?id=151165197", Ft = "http://www.roblox.com/asset/?id=151165224", Lf = "http://www.roblox.com/asset/?id=151165191", Rt = "http://www.roblox.com/asset/?id=151165206", Up = "http://www.roblox.com/asset/?id=151165227" },
+    ["Purple Sunset"] = { Bk = "rbxassetid://264908339", Dn = "rbxassetid://264907909", Ft = "rbxassetid://264909420", Lf = "rbxassetid://264909758", Rt = "rbxassetid://264908886", Up = "rbxassetid://264907379" },
+    ["Blue Night"] = { Bk = "http://www.roblox.com/asset/?id=12064107", Dn = "http://www.roblox.com/asset/?id=12064152", Ft = "http://www.roblox.com/asset/?id=12064121", Lf = "http://www.roblox.com/asset/?id=12063984", Rt = "http://www.roblox.com/asset/?id=12064115", Up = "http://www.roblox.com/asset/?id=12064131" },
+    ["Summer"] = { Bk = "rbxassetid://16648590964", Dn = "rbxassetid://16648617436", Ft = "rbxassetid://16648595424", Lf = "rbxassetid://16648566370", Rt = "rbxassetid://16648577071", Up = "rbxassetid://16648598180" },
+    ["Galaxy"] = { Bk = "rbxassetid://15983968922", Dn = "rbxassetid://15983966825", Ft = "rbxassetid://15983965025", Lf = "rbxassetid://15983967420", Rt = "rbxassetid://15983966246", Up = "rbxassetid://15983964246" },
+    ["Minecraft"] = { Bk = "rbxassetid://8735166756", Dn = "http://www.roblox.com/asset/?id=8735166707", Ft = "http://www.roblox.com/asset/?id=8735231668", Lf = "http://www.roblox.com/asset/?id=8735166755", Rt = "http://www.roblox.com/asset/?id=8735166751", Up = "http://www.roblox.com/asset/?id=8735166729" },
+}
+
+local function setupSky(skyName)
+    local assets = SKYBOX_ASSETS[skyName]
+    if not assets then
+        local skyId = tostring(skyName):gsub("%s+", ""):gsub("rbxassetid://", "")
+        if skyId:match("^%d+$") then
+            local url = "rbxassetid://" .. skyId
+            for _, obj in ipairs(Lighting:GetChildren()) do
+                if obj:IsA("Sky") then
+                    obj:Destroy()
+                end
+            end
+            local sky = Instance.new("Sky")
+            sky.SkyboxBk = url
+            sky.SkyboxDn = url
+            sky.SkyboxFt = url
+            sky.SkyboxLf = url
+            sky.SkyboxRt = url
+            sky.SkyboxUp = url
+            sky.Parent = Lighting
+            notify("Небо", "Загружено: " .. skyId, 2)
+        else
+            notify("Небо", "Неизвестный скибокс", 2)
+        end
+        return
+    end
+
+    task.spawn(function()
+        ContentProvider:PreloadAsync({
+            assets.Bk,
+            assets.Dn,
+            assets.Ft,
+            assets.Lf,
+            assets.Rt,
+            assets.Up,
+        })
+    end)
+
+    local sky = Lighting:FindFirstChildOfClass("Sky") or Instance.new("Sky")
+    sky.Name = "Sky"
+    sky.Parent = Lighting
+    sky.SkyboxBk = assets.Bk
+    sky.SkyboxDn = assets.Dn
+    sky.SkyboxFt = assets.Ft
+    sky.SkyboxLf = assets.Lf
+    sky.SkyboxRt = assets.Rt
+    sky.SkyboxUp = assets.Up
+    notify("Небо", "Загружено: " .. skyName, 2)
+end
+
+local function removeSky()
+    for _, obj in ipairs(Lighting:GetChildren()) do
+        if obj:IsA("Sky") then
+            obj:Destroy()
+        end
+    end
+    notify("Небо", "Удалено", 2)
+end
+
+-- ========================================
+-- WEATHER
+-- ========================================
+local function applyWeather(preset)
+    if preset == "Clear" then
+        Lighting.FogEnd = 100000
+        Lighting.Brightness = 2
+    elseif preset == "Rain" then
+        Lighting.FogEnd = 500
+        Lighting.Brightness = 1.5
+    elseif preset == "Fog" then
+        Lighting.FogEnd = 80
+        Lighting.Brightness = 1
+    end
+end
+
+-- ========================================
+-- CHARACTER COLOR
+-- ========================================
+local function applyCharacterColor(color)
+    Settings.CharacterColor = color
+    local character = LocalPlayer.Character
+    if character then
+        for _, part in ipairs(character:GetDescendants()) do
+            if part:IsA("BasePart") and part.Name ~= "Head" then
+                part.Color = color
+            end
+        end
+    end
+end
+
+-- ========================================
+-- GLOW
+-- ========================================
+local function toggleGlow(value)
+    Settings.GlowEnabled = value
+    if value then
+        local character = LocalPlayer.Character
+        if character then
+            local glow = character:FindFirstChild("SkyHubGlow")
+            if not glow then
+                glow = Instance.new("Highlight")
+                glow.Name = "SkyHubGlow"
+                glow.FillColor = Color3.fromRGB(0, 200, 255)
+                glow.OutlineColor = Color3.fromRGB(0, 220, 255)
+                glow.FillTransparency = 0.65
+                glow.Parent = character
+            end
+        end
+    else
+        if LocalPlayer.Character then
+            local glow = LocalPlayer.Character:FindFirstChild("SkyHubGlow")
+            if glow then
+                glow:Destroy()
+            end
+        end
+    end
+end
+
+-- ========================================
+-- TEXTURE PACK
+-- ========================================
+local TEXTURE_VARIANTS = {
+    Brick = { BaseMaterial = Enum.Material.Brick, Texture = 'rbxassetid://10777285622' },
+    Concrete = { BaseMaterial = Enum.Material.Concrete, Texture = 'rbxassetid://15622710576' },
+    CorrodedMetal = { BaseMaterial = Enum.Material.CorrodedMetal, Texture = 'rbxassetid://78612695839404' },
+    Grass = { BaseMaterial = Enum.Material.Grass, Texture = 'rbxassetid://9267183930' },
+    Metal = { BaseMaterial = Enum.Material.Metal, Texture = 'rbxassetid://121650613091353' },
+    Sand = { BaseMaterial = Enum.Material.Sand, Texture = 'rbxassetid://12624140843' },
+    Slate = { BaseMaterial = Enum.Material.Slate, Texture = 'rbxassetid://8676746437' },
+    Wood = { BaseMaterial = Enum.Material.Wood, Texture = 'rbxassetid://3258599312' },
+    WoodPlanks = { BaseMaterial = Enum.Material.WoodPlanks, Texture = 'rbxassetid://8676581022' },
+}
+
+local TEXTURE_VARIANT_BY_MATERIAL = {
+    [Enum.Material.Brick] = 'Brick',
+    [Enum.Material.Concrete] = 'Concrete',
+    [Enum.Material.CorrodedMetal] = 'CorrodedMetal',
+    [Enum.Material.Grass] = 'Grass',
+    [Enum.Material.Metal] = 'Metal',
+    [Enum.Material.Sand] = 'Sand',
+    [Enum.Material.Slate] = 'Slate',
+    [Enum.Material.Wood] = 'Wood',
+    [Enum.Material.WoodPlanks] = 'WoodPlanks',
+}
+
+local function ensureTextureVariants()
+    if Cache.TextureVariantsBuilt then return end
+    for name, data in pairs(TEXTURE_VARIANTS) do
+        local variant = MaterialService:FindFirstChild(name)
+        if not variant then
+            variant = Instance.new('MaterialVariant')
+            variant.Name = name
+            variant.Parent = MaterialService
+        end
+        pcall(function()
+            variant.BaseMaterial = data.BaseMaterial
+            variant.ColorMap = data.Texture
+            variant.MetalnessMap = data.Texture
+            variant.NormalMap = data.Texture
+            variant.RoughnessMap = data.Texture
+            variant.MaterialPattern = Enum.MaterialPattern.Regular
+            variant.StudsPerTile = 5
+        end)
+    end
+    Cache.TextureVariantsBuilt = true
+end
+
+local function rememberTexturePart(part)
+    if not Cache.TextureState[part] then
+        Cache.TextureState[part] = {
+            Color = part.Color,
+            Material = part.Material,
+            MaterialVariant = part.MaterialVariant,
+        }
+    end
+    return Cache.TextureState[part]
+end
+
+local function shouldSkipTexturePart(part)
+    if not part:IsDescendantOf(Workspace) then return true end
+    if part.Name == 'LarpticWeather' or part.Name == 'Part' then return true end
+    local parent = part.Parent
+    if parent and (parent:IsA('Tool') or parent:IsA('Accessory')) then return true end
+    local model = part:FindFirstAncestorOfClass('Model')
+    if model and Players:GetPlayerFromCharacter(model) then return true end
+    return false
+end
+
+local function applyTexturePack()
+    if not Settings.TexturePackEnabled then return end
+    ensureTextureVariants()
+    for _, obj in ipairs(Workspace:GetDescendants()) do
+        if obj:IsA('BasePart') and not shouldSkipTexturePart(obj) then
+            rememberTexturePart(obj)
+            local variantName = TEXTURE_VARIANT_BY_MATERIAL[obj.Material]
+            if variantName then
+                pcall(function() obj.MaterialVariant = variantName end)
+            end
+        end
+    end
+end
+
+local function clearTexturePack()
+    for part, state in pairs(Cache.TextureState) do
+        if part and part.Parent and state then
+            pcall(function()
+                part.Color = state.Color
+                part.Material = state.Material
+                part.MaterialVariant = state.MaterialVariant or ''
+            end)
+        end
+    end
+    Cache.TextureState = {}
+    for name, _ in pairs(TEXTURE_VARIANTS) do
+        local variant = MaterialService:FindFirstChild(name)
+        if variant and variant:IsA('MaterialVariant') then
+            pcall(function() variant:Destroy() end)
+        end
+    end
+    Cache.TextureVariantsBuilt = false
+end
+
+-- ========================================
+-- STRETCH
+-- ========================================
+local function applyStretch(state)
+    Settings.StretchEnabled = state
+    if not state then
+        if Cache.StretchConnection then
+            pcall(function() Cache.StretchConnection:Disconnect() end)
+            Cache.StretchConnection = nil
+        end
+        pcall(function()
+            workspace.CurrentCamera.CFrame = workspace.CurrentCamera.CFrame
+        end)
+        return
+    end
+    if not Cache.StretchConnection then
+        Cache.StretchConnection = RunService.RenderStepped:Connect(function()
+            local camera = workspace.CurrentCamera
+            if camera then
+                camera.CFrame = camera.CFrame *
+                    CFrame.new(0, 0, 0, 1, 0, 0, 0, Settings.StretchFactor, 0, 0, 0, 1)
+            end
+        end)
+    end
+end
+
+-- ========================================
+-- CHINA HAT (только классика)
+-- ========================================
+local function hatRemoveClassic()
+    if Cache.ChinaHatParts[LocalPlayer.Character] then
+        pcall(function() Cache.ChinaHatParts[LocalPlayer.Character]:Destroy() end)
+        Cache.ChinaHatParts[LocalPlayer.Character] = nil
+    end
+end
+
+local function hatAddClassic(character)
+    task.wait(0.1)
+    local head = character:WaitForChild("Head", 5)
+    if not head then return end
+    hatRemoveClassic()
+
+    local hat = Instance.new("Part")
+    hat.Name = "ChineseHat"
+    hat.Transparency = Settings.ChinaHatTransparency
+    hat.Color = Settings.ChinaHatColor
+    hat.Material = Enum.Material.Neon
+    hat.CanCollide = false
+    hat.Reflectance = Settings.ChinaHatReflectance or 0
+
+    local mesh = Instance.new("SpecialMesh")
+    mesh.MeshId = "rbxassetid://1033714"
+    mesh.Scale = Vector3.new(Settings.ChinaHatRadius, Settings.ChinaHatHeight, Settings.ChinaHatRadius)
+    mesh.Parent = hat
+
+    local weld = Instance.new("WeldConstraint")
+    weld.Part0 = head
+    weld.Part1 = hat
+    weld.Parent = hat
+
+    hat.CFrame = head.CFrame * CFrame.new(0, 1.1, 0)
+    hat.Parent = character
+    Cache.ChinaHatParts[character] = hat
+end
+
+local function hatUpdateClassic()
+    for character, hat in pairs(Cache.ChinaHatParts) do
+        if hat and hat.Parent and character == LocalPlayer.Character then
+            hat.Transparency = Settings.ChinaHatTransparency
+            hat.Reflectance = Settings.ChinaHatReflectance or 0
+            if Settings.ChinaHatRainbow then
+                hat.Color = Color3.fromHSV(
+                    tick() % Settings.ChinaHatRainbowSpeed / Settings.ChinaHatRainbowSpeed,
+                    1,
+                    1
+                )
+            else
+                hat.Color = Settings.ChinaHatColor
+            end
+            local mesh = hat:FindFirstChildOfClass("SpecialMesh")
+            if mesh then
+                mesh.Scale = Vector3.new(Settings.ChinaHatRadius, Settings.ChinaHatHeight, Settings.ChinaHatRadius)
+            end
+        end
+    end
+end
+
+local function toggleChinaHat(value)
+    Settings.ChinaHatEnabled = value
+    if value then
+        if Settings.ChinaHatStyle == "Classic" and LocalPlayer.Character then
+            hatAddClassic(LocalPlayer.Character)
+        end
+        if Cache.ChinaHatConnection then
+            safeDisconnect(Cache.ChinaHatConnection)
+        end
+        Cache.ChinaHatConnection = RunService.Heartbeat:Connect(function()
+            if Settings.ChinaHatStyle == "Classic" then
+                hatUpdateClassic()
+            end
+        end)
+        notify("China Hat", "Включен (" .. Settings.ChinaHatStyle .. ")", 2)
+    else
+        hatRemoveClassic()
+        if Cache.ChinaHatConnection then
+            safeDisconnect(Cache.ChinaHatConnection)
+            Cache.ChinaHatConnection = nil
+        end
+        notify("China Hat", "Выключен", 2)
+    end
+end
+
+local function hatChangeStyle(value)
+    local wasEnabled = Settings.ChinaHatEnabled
+    Settings.ChinaHatStyle = value
+    if wasEnabled then
+        toggleChinaHat(false)
+        task.wait(0.1)
+        toggleChinaHat(true)
+    end
+    notify("China Hat", "Стиль: " .. value, 2)
+end
+
+-- ========================================
+-- AURA
+-- ========================================
+local AURA_IDS = {
+    angel = "97658130917593",
+    starlight = "134645216613107",
+    heavenly = "139300897520961",
+    ribbon = "132069507632161",
+    sakura = "81755778619404",
+    wind = "80694081850877",
+    flow = "119913533725648",
+    star = "73754563740680",
+}
+local AURA_ORDER = { "angel", "starlight", "heavenly", "ribbon", "sakura", "wind", "flow", "star" }
+local AuraSelected = {}
+for _, name in ipairs(AURA_ORDER) do
+    AuraSelected[name] = false
+end
+
+local function clearAura()
+    for _, particle in ipairs(Cache.AuraParticles) do
+        pcall(function() particle:Destroy() end)
+    end
+    Cache.AuraParticles = {}
+end
+
+local function loadAura(name)
+    if Cache.AuraCache[name] then
+        return Cache.AuraCache[name]
+    end
+    local id = AURA_IDS[name]
+    if not id then return nil end
+    local success, result = pcall(game.GetObjects, game, "rbxassetid://" .. id)
+    if success and result and result[1] then
+        Cache.AuraCache[name] = result[1]
+        return result[1]
+    end
+    return nil
+end
+
+local function colorAura(model, color)
+    local seq = ColorSequence.new(color)
+    for _, descendant in ipairs(model:GetDescendants()) do
+        if descendant:IsA("PointLight") then
+            descendant.Color = color
+        elseif descendant:IsA("ParticleEmitter") or
+            descendant:IsA("Beam") or
+            descendant:IsA("Trail") then
+            descendant.Color = seq
+        end
+    end
+end
+
+local function applyAura()
+    clearAura()
+    if not Settings.AuraEnabled then return end
+    local character = LocalPlayer.Character
+    if not character then return end
+
+    for _, name in ipairs(AURA_ORDER) do
+        if AuraSelected[name] then
+            local aura_model = loadAura(name)
+            if aura_model then
+                colorAura(aura_model, Settings.AuraColor)
+                local cloned = aura_model:Clone()
+                for _, part in ipairs(cloned:GetChildren()) do
+                    local target = character:FindFirstChild(part.Name)
+                    if target and target:IsA("BasePart") then
+                        for _, child in ipairs(part:GetChildren()) do
+                            child.Parent = target
+                            table.insert(Cache.AuraParticles, child)
+                        end
+                    end
+                end
+                cloned:Destroy()
+            end
+        end
+    end
+end
+
+local function toggleAura(value)
+    Settings.AuraEnabled = value
+    if value then
+        applyAura()
+    else
+        clearAura()
+    end
+end
+
+-- ========================================
+-- ORBIZ
+-- ========================================
+local function createOrbiz()
+    if Cache.OrbizFolder then
+        Cache.OrbizFolder:Destroy()
+    end
+    if Cache.OrbizConnection then
+        Cache.OrbizConnection:Disconnect()
+    end
+    Cache.OrbizParticles = {}
+    if not Settings.OrbizEnabled then return end
+
+    local character = LocalPlayer.Character
+    if not character then return end
+    local rootPart = character:FindFirstChild("HumanoidRootPart")
+    if not rootPart then return end
+
+    local folder = Instance.new("Folder")
+    folder.Name = "Orbiz3D"
+    folder.Parent = Workspace
+    Cache.OrbizFolder = folder
+
+    local count = 800
+    for i = 1, count do
+        local part = Instance.new("Part")
+        part.Shape = Enum.PartType.Ball
+        part.Size = Vector3.new(0.2 + math.random() * 0.3, 0.2 + math.random() * 0.3, 0.2 + math.random() * 0.3)
+        part.BrickColor = BrickColor.new("Bright violet")
+        part.Material = Enum.Material.Neon
+        part.Transparency = 0.2 + math.random() * 0.5
+        part.Anchored = true
+        part.CanCollide = false
+        part.Parent = folder
+
+        local range = 80
+        part.Position = rootPart.Position +
+            Vector3.new(
+                (math.random() - 0.5) * range * 2,
+                math.random() * 50 + 20,
+                (math.random() - 0.5) * range * 2
+            )
+        table.insert(Cache.OrbizParticles, {
+            part = part,
+            speed = 0.2 + math.random() * 0.8,
+            driftX = (math.random() - 0.5) * 0.5,
+            driftZ = (math.random() - 0.5) * 0.5,
+            startY = part.Position.Y,
+        })
+    end
+
+    Cache.OrbizConnection = RunService.Heartbeat:Connect(function()
+        if not Settings.OrbizEnabled then return end
+        local rootPos = rootPart and rootPart.Position or Vector3.new(0, 0, 0)
+        local range = 80
+        for _, data in pairs(Cache.OrbizParticles) do
+            local part = data.part
+            if not part or not part.Parent then continue end
+            local pos = part.Position
+            pos = pos - Vector3.new(0, data.speed * 0.08, 0)
+            pos = pos + Vector3.new(data.driftX * 0.03, 0, data.driftZ * 0.03)
+            if pos.Y < rootPos.Y - 10 then
+                pos = Vector3.new(
+                    rootPos.X + (math.random() - 0.5) * range * 2,
+                    rootPos.Y + 30 + math.random() * 40,
+                    rootPos.Z + (math.random() - 0.5) * range * 2
+                )
+                part.Transparency = 0.2 + math.random() * 0.5
+                part.Size = Vector3.new(0.2 + math.random() * 0.4, 0.2 + math.random() * 0.4, 0.2 + math.random() * 0.4)
+            end
+            part.Position = pos
+        end
+    end)
+end
+
+local function toggleOrbiz(value)
+    Settings.OrbizEnabled = value
+    createOrbiz()
+    notify("Орбизы", value and "Включены" or "Выключены", 2)
+end
+
+-- ========================================
+-- FLING
+-- ========================================
+local function flingPlayer(target)
+    if not target or not target.Character then return end
+    local rootPart = target.Character:FindFirstChild("HumanoidRootPart")
+    if not rootPart then return end
+
+    local bodyVelocity = Instance.new("BodyVelocity")
+    bodyVelocity.MaxForce = Vector3.new(1e5, 1e5, 1e5)
+    bodyVelocity.Velocity = Vector3.new(0, 150, 0)
+    bodyVelocity.Parent = rootPart
+    task.delay(0.4, function()
+        if bodyVelocity then
+            bodyVelocity:Destroy()
+        end
+    end)
+    notify("Флинг", "Выбиваем " .. target.Name, 2)
+end
+
+local function flingAllPlayers()
+    for _, player in ipairs(Players:GetPlayers()) do
+        if player ~= LocalPlayer then
+            flingPlayer(player)
+        end
+    end
+end
+
+-- ========================================
+-- TELEPORT
+-- ========================================
+local function teleportToPlayer(player)
+    if not player or not player.Character then return end
+    local rootPart = player.Character:FindFirstChild("HumanoidRootPart")
+    if not rootPart then return end
+    if not LocalPlayer.Character then return end
+    local myRoot = LocalPlayer.Character:FindFirstChild("HumanoidRootPart")
+    if myRoot then
+        myRoot.CFrame = rootPart.CFrame * CFrame.new(0, 3, 2)
+    end
+end
+
+local function teleportToBall()
+    local ball = getBall()
+    if not ball then
+        notify("Телепорт", "Мяч не найден", 2)
+        return
+    end
+    if not LocalPlayer.Character then return end
+    local myRoot = LocalPlayer.Character:FindFirstChild("HumanoidRootPart")
+    if myRoot then
+        myRoot.CFrame = ball.CFrame * CFrame.new(0, 3, 2)
+        notify("Телепорт", "Телепорт к мячу", 2)
+    end
+end
+
+-- ========================================
+-- COMBAT (BLADE BALL)
+-- ========================================
+local function combatLoop()
+    while true do
+        task.wait(0.05)
+        if not LocalPlayer.Character then continue end
+
+        local ball = getBall()
+        local myRoot = LocalPlayer.Character:FindFirstChild("HumanoidRootPart")
+        if not myRoot or not ball then continue end
+
+        local dist = (myRoot.Position - ball.Position).Magnitude
+
+        -- Auto Parry
+        if Settings.AutoParry and dist < 15 and dist > 2 then
+            parry()
+            task.wait(Settings.ParryDelay)
+        end
+
+        -- Auto Spam
+        if Settings.AutoSpam then
+            parry()
+            task.wait(0.01)
+        end
+
+        -- Auto Clash
+        if Settings.AutoClash and dist < 10 then
+            -- Телепорт к мячу для столкновения
+            myRoot.CFrame = ball.CFrame * CFrame.new(0, 0, -3)
+        end
+
+        -- Auto Play (движение к мячу)
+        if Settings.AutoPlay then
+            local dir = (ball.Position - myRoot.Position).Unit
+            myRoot.CFrame = myRoot.CFrame + dir * 0.5
+        end
+
+        -- Aimbot (наведение на мяч)
+        if Settings.AimbotEnabled then
+            Camera.CFrame = CFrame.lookAt(Camera.CFrame.Position, ball.Position, Vector3.new(0, 1, 0))
+        end
+    end
+end
+
+local function startCombat()
+    safeDisconnect(Cache.CombatConn)
+    Cache.CombatConn = nil
+    Cache.CombatConn = task.spawn(combatLoop)
+end
+
+-- ========================================
+-- ОСНОВНОЙ ЦИКЛ
+-- ========================================
+local function updateVisuals()
+    -- Ball ESP
+    local ball = getBall()
+    if Settings.BallESP and ball then
+        createOrUpdateHighlight(ball, Settings.BallColor, "BallESP")
+    elseif ball then
+        removeHighlight(ball)
+    end
+
+    -- Player ESP (все игроки)
+    if Settings.PlayerESP then
+        for _, player in ipairs(Players:GetPlayers()) do
+            if player ~= LocalPlayer and player.Character then
+                createOrUpdateHighlight(player.Character, Settings.PlayerColor, "PlayerESP")
+            end
+        end
+    else
+        for _, player in ipairs(Players:GetPlayers()) do
+            if player.Character then
+                removeHighlight(player.Character)
+            end
+        end
+    end
+
+    -- Chams
+    if Settings.ChamsEnabled then
+        for _, player in ipairs(Players:GetPlayers()) do
+            if player ~= LocalPlayer then
+                applyChams(player)
+            end
+        end
+    else
+        clearAllChams()
+    end
+end
+
+local function startMainUpdate()
+    safeDisconnect(Cache.MainConn)
+    Cache.MainConn = nil
+
+    Cache.MainConn = RunService.Heartbeat:Connect(function()
+        updateVisuals()
+        if Settings.JumpCircles then
+            updateJumpCircles()
+        end
+    end)
+end
+
+-- ========================================
+-- GUI (ПОЛНЫЙ ИНТЕРФЕЙС)
+-- ========================================
+local ScreenGui = Instance.new("ScreenGui")
+ScreenGui.Name = "SkyHub"
+ScreenGui.ResetOnSpawn = false
+ScreenGui.ZIndexBehavior = Enum.ZIndexBehavior.Sibling
+ScreenGui.IgnoreGuiInset = true
+ScreenGui.Parent = PlayerGui
+
+local Container = Instance.new("Frame")
+Container.Name = "Container"
+Container.Size = UDim2.new(1, 0, 1, 0)
+Container.BackgroundTransparency = 1
+Container.Parent = ScreenGui
+
+local Main = Instance.new("Frame")
+Main.Name = "Main"
+Main.Size = UDim2.new(0.8, 0, 0.7, 0)
+Main.Position = UDim2.new(0.5, -0.4, 0.5, -0.35)
+Main.BackgroundColor3 = Theme.Background
+Main.BorderSizePixel = 0
+Main.ClipsDescendants = false
+Main.Parent = Container
+
+local function applyTheme(name)
+    local themes = {
+        Dark = { Main = Color3.fromRGB(18, 18, 22), Card = Color3.fromRGB(25, 25, 31), Accent = Color3.fromRGB(90, 90, 100) },
+        Blue = { Main = Color3.fromRGB(14, 20, 30), Card = Color3.fromRGB(20, 30, 45), Accent = Color3.fromRGB(40, 130, 255) },
+        Purple = { Main = Color3.fromRGB(18, 14, 27), Card = Color3.fromRGB(28, 20, 42), Accent = Color3.fromRGB(145, 70, 255) },
+        Green = { Main = Color3.fromRGB(14, 25, 18), Card = Color3.fromRGB(20, 38, 26), Accent = Color3.fromRGB(60, 210, 110) },
+        Red = { Main = Color3.fromRGB(27, 15, 17), Card = Color3.fromRGB(40, 20, 23), Accent = Color3.fromRGB(230, 65, 75) },
+        Gray = { Main = Color3.fromRGB(28, 28, 28), Card = Color3.fromRGB(38, 38, 38), Accent = Color3.fromRGB(160, 160, 160) },
+    }
+    local t = themes[name] or themes.Purple
+    Main.BackgroundColor3 = t.Main
+    Header.BackgroundColor3 = t.Card
+    TabBar.BackgroundColor3 = t.Card
+    ContentArea.BackgroundColor3 = t.Card
+    Theme.Accent = t.Accent
+    Theme.Main = t.Main
+    Theme.Card = t.Card
+end
+
+-- Header
+local Header = Instance.new("Frame")
+Header.Name = "Header"
+Header.Size = UDim2.new(1, 0, 0, 52)
+Header.BackgroundColor3 = Theme.Card
+Header.BorderSizePixel = 0
+Header.Parent = Main
+
+local Title = Instance.new("TextLabel")
+Title.Size = UDim2.new(0, 300, 1, 0)
+Title.Position = UDim2.new(0, 20, 0, 0)
+Title.BackgroundTransparency = 1
+Title.Text = "SKYHUB"
+Title.TextColor3 = Theme.Text
+Title.TextSize = 18
+Title.Font = FontBold
+Title.TextXAlignment = Enum.TextXAlignment.Left
+Title.Parent = Header
+
+local CloseBtn = Instance.new("TextButton")
+CloseBtn.Size = UDim2.new(0, 36, 0, 36)
+CloseBtn.Position = UDim2.new(1, -46, 0.5, -18)
+CloseBtn.BackgroundColor3 = Theme.Element
+CloseBtn.Text = "х"
+CloseBtn.TextColor3 = Theme.SubText
+CloseBtn.TextSize = 16
+CloseBtn.Font = FontBold
+CloseBtn.AutoButtonColor = false
+CloseBtn.BorderSizePixel = 0
+CloseBtn.Parent = Header
+CloseBtn.MouseButton1Click:Connect(function()
+    Cache.SavedMainPosition = Main.Position
+    Main.Visible = false
+    Mini.Visible = true
+end)
+
+-- Mini Icon (сворачивание)
+local Mini = Instance.new("TextButton")
+Mini.Size = UDim2.new(0, 55, 0, 55)
+Mini.Position = UDim2.fromScale(0.05, 0.5)
+Mini.AnchorPoint = Vector2.new(0, 0.5)
+Mini.BackgroundColor3 = Theme.Accent
+Mini.Text = "S"
+Mini.TextColor3 = Color3.new(1, 1, 1)
+Mini.Font = Enum.Font.GothamBlack
+Mini.TextSize = 28
+Mini.Visible = false
+Mini.Parent = ScreenGui
+Instance.new("UICorner", Mini).CornerRadius = UDim.new(0, 15)
+
+Mini.MouseButton1Click:Connect(function()
+    Main.Visible = true
+    Mini.Visible = false
+    if Cache.SavedMainPosition then
+        Main.Position = Cache.SavedMainPosition
+    end
+end)
+
+-- Dragging
+local Drag = { dragging = false, startPos = nil, dragStart = nil }
+
+Header.InputBegan:Connect(function(input)
+    if input.UserInputType == Enum.UserInputType.MouseButton1 or
+        input.UserInputType == Enum.UserInputType.Touch then
+        Drag.dragging = true
+        Drag.dragStart = input.Position
+        Drag.startPos = Main.Position
+    end
+end)
+
+UserInputService.InputChanged:Connect(function(input)
+    if Drag.dragging and (input.UserInputType == Enum.UserInputType.MouseMovement or
+        input.UserInputType == Enum.UserInputType.Touch) then
+        local delta = input.Position - Drag.dragStart
+        Main.Position = UDim2.new(
+            Drag.startPos.X.Scale,
+            Drag.startPos.X.Offset + delta.X,
+            Drag.startPos.Y.Scale,
+            Drag.startPos.Y.Offset + delta.Y
+        )
+    end
+end)
+
+UserInputService.InputEnded:Connect(function(input)
+    if input.UserInputType == Enum.UserInputType.MouseButton1 or
+        input.UserInputType == Enum.UserInputType.Touch then
+        Drag.dragging = false
+    end
+end)
+
+-- Tab Bar (ScrollingFrame)
+local TabBar = Instance.new("ScrollingFrame")
+TabBar.Name = "TabBar"
+TabBar.Size = UDim2.new(0, 160, 1, -64)
+TabBar.Position = UDim2.new(0, 8, 0, 56)
+TabBar.BackgroundColor3 = Theme.Card
+TabBar.BorderSizePixel = 0
+TabBar.ScrollingDirection = Enum.ScrollingDirection.Y
+TabBar.ScrollBarThickness = 4
+TabBar.ScrollBarImageColor3 = Theme.Accent
+TabBar.AutomaticCanvasSize = Enum.AutomaticSize.Y
+TabBar.CanvasSize = UDim2.new(0, 0, 0, 0)
+TabBar.Parent = Main
+
+local TabBarLayout = Instance.new("UIListLayout")
+TabBarLayout.Padding = UDim.new(0, 6)
+TabBarLayout.SortOrder = Enum.SortOrder.LayoutOrder
+TabBarLayout.FillDirection = Enum.FillDirection.Vertical
+TabBarLayout.Parent = TabBar
+
+local TabBarPadding = Instance.new("UIPadding")
+TabBarPadding.PaddingTop = UDim.new(0, 10)
+TabBarPadding.PaddingBottom = UDim.new(0, 10)
+TabBarPadding.PaddingLeft = UDim.new(0, 10)
+TabBarPadding.PaddingRight = UDim.new(0, 10)
+TabBarPadding.Parent = TabBar
+
+-- Content Area
+local ContentArea = Instance.new("Frame")
+ContentArea.Name = "ContentArea"
+ContentArea.Size = UDim2.new(1, -184, 1, -64)
+ContentArea.Position = UDim2.new(0, 176, 0, 56)
+ContentArea.BackgroundColor3 = Theme.Card
+ContentArea.BorderSizePixel = 0
+ContentArea.Parent = Main
+
+local Content = Instance.new("ScrollingFrame")
+Content.Name = "Content"
+Content.Size = UDim2.new(1, 0, 1, 0)
+Content.BackgroundTransparency = 1
+Content.BorderSizePixel = 0
+Content.ScrollBarThickness = 6
+Content.ScrollBarImageColor3 = Theme.Accent
+Content.CanvasSize = UDim2.new(0, 0, 0, 0)
+Content.Parent = ContentArea
+
+local ContentPadding = Instance.new("UIPadding")
+ContentPadding.PaddingTop = UDim.new(0, 12)
+ContentPadding.PaddingBottom = UDim.new(0, 12)
+ContentPadding.PaddingLeft = UDim.new(0, 12)
+ContentPadding.PaddingRight = UDim.new(0, 12)
+ContentPadding.Parent = Content
+
+-- Tabs (8 вкладок)
+local TabNames = { "Player", "ESP", "Visual", "Teleport", "Fling", "Combat", "Settings", "Bio" }
+local TabButtons = {}
+local TabPages = {}
+
+local function updateCanvas()
+    task.wait(0.05)
+    local totalHeight = 24
+    for _, page in pairs(TabPages) do
+        if page.Visible then
+            for _, child in ipairs(page:GetChildren()) do
+                if child:IsA("Frame") and child.Name ~= "UIListLayout" and child.Name ~= "UIPadding" then
+                    totalHeight = totalHeight + child.AbsoluteSize.Y + 12
+                end
+            end
+        end
+    end
+    Content.CanvasSize = UDim2.new(0, 0, 0, totalHeight + 20)
+end
+
+local function switchTab(name)
+    for n, btn in pairs(TabButtons) do
+        if btn then
+            TweenService:Create(btn, TweenInfo.new(0.2), { BackgroundColor3 = Theme.Card }):Play()
+            local lbl = btn:FindFirstChild("Label")
+            if lbl then
+                TweenService:Create(lbl, TweenInfo.new(0.2), { TextColor3 = Theme.SubText }):Play()
+            end
+        end
+    end
+    for n, page in pairs(TabPages) do
+        if page then
+            page.Visible = false
+        end
+    end
+    local btn = TabButtons[name]
+    if btn then
+        TweenService:Create(btn, TweenInfo.new(0.2), { BackgroundColor3 = Theme.Element }):Play()
+        local lbl = btn:FindFirstChild("Label")
+        if lbl then
+            TweenService:Create(lbl, TweenInfo.new(0.2), { TextColor3 = Theme.Text }):Play()
+        end
+    end
+    if TabPages[name] then
+        TabPages[name].Visible = true
+    end
+    updateCanvas()
+end
+
+for i, name in ipairs(TabNames) do
+    local btn = Instance.new("TextButton")
+    btn.Name = name .. "Btn"
+    btn.Size = UDim2.new(1, 0, 0, 42)
+    btn.BackgroundColor3 = Theme.Card
+    btn.Text = name
+    btn.TextColor3 = Theme.SubText
+    btn.TextSize = 13
+    btn.Font = Font
+    btn.TextXAlignment = Enum.TextXAlignment.Left
+    btn.AutoButtonColor = false
+    btn.BorderSizePixel = 0
+    btn.Parent = TabBar
+
+    local pad = Instance.new("UIPadding")
+    pad.PaddingLeft = UDim.new(0, 12)
+    pad.Parent = btn
+
+    TabButtons[name] = btn
+
+    local page = Instance.new("Frame")
+    page.Name = name .. "Page"
+    page.Size = UDim2.new(1, 0, 1, 0)
+    page.BackgroundTransparency = 1
+    page.Visible = false
+    page.Parent = Content
+
+    local pageLayout = Instance.new("UIListLayout")
+    pageLayout.Padding = UDim.new(0, 12)
+    pageLayout.SortOrder = Enum.SortOrder.LayoutOrder
+    pageLayout.FillDirection = Enum.FillDirection.Vertical
+    pageLayout.Parent = page
+    pageLayout:GetPropertyChangedSignal("AbsoluteContentSize"):Connect(updateCanvas)
+
+    TabPages[name] = page
+    btn.MouseButton1Click:Connect(function()
+        switchTab(name)
+    end)
+end
+
+-- UI Elements
+local function createCard(page, titleText, order)
+    local card = Instance.new("Frame")
+    card.Name = titleText .. "Card"
+    card.BackgroundColor3 = Theme.Element
+    card.BorderSizePixel = 0
+    card.LayoutOrder = order
+    card.Size = UDim2.new(1, 0, 0, 0)
+    card.AutomaticSize = Enum.AutomaticSize.Y
+    card.Parent = page
+
+    local pad = Instance.new("UIPadding")
+    pad.PaddingTop = UDim.new(0, 10)
+    pad.PaddingBottom = UDim.new(0, 10)
+    pad.PaddingLeft = UDim.new(0, 10)
+    pad.PaddingRight = UDim.new(0, 10)
+    pad.Parent = card
+
+    local list = Instance.new("UIListLayout")
+    list.Padding = UDim.new(0, 8)
+    list.SortOrder = Enum.SortOrder.LayoutOrder
+    list.Parent = card
+
+    local head = Instance.new("TextLabel")
+    head.Name = "CardTitle"
+    head.Size = UDim2.new(1, 0, 0, 20)
+    head.BackgroundTransparency = 1
+    head.Text = titleText
+    head.TextColor3 = Theme.Text
+    head.TextSize = 15
+    head.Font = FontBold
+    head.TextXAlignment = Enum.TextXAlignment.Left
+    head.LayoutOrder = 0
+    head.Parent = card
+
+    local sep = Instance.new("Frame")
+    sep.Name = "Separator"
+    sep.Size = UDim2.new(1, 0, 0, 1)
+    sep.BackgroundColor3 = Theme.Stroke
+    sep.BorderSizePixel = 0
+    sep.LayoutOrder = 1
+    sep.Parent = card
+
+    return card
+end
+
+local function createToggle(card, name, default, callback)
+    local frame = Instance.new("Frame")
+    frame.Name = name .. "Toggle"
+    frame.Size = UDim2.new(1, 0, 0, 32)
+    frame.BackgroundTransparency = 1
+    frame.LayoutOrder = 10
+    frame.Parent = card
+
+    local label = Instance.new("TextLabel")
+    label.Size = UDim2.new(0.6, 0, 1, 0)
+    label.BackgroundTransparency = 1
+    label.Text = name
+    label.TextColor3 = Theme.SubText
+    label.TextSize = 14
+    label.Font = Font
+    label.TextXAlignment = Enum.TextXAlignment.Left
+    label.Parent = frame
+
+    local btn = Instance.new("TextButton")
+    btn.Size = UDim2.new(0, 44, 0, 24)
+    btn.Position = UDim2.new(0.6, 0, 0.5, -12)
+    btn.BackgroundColor3 = Theme.Card
+    btn.Text = ""
+    btn.AutoButtonColor = false
+    btn.BorderSizePixel = 0
+    btn.Parent = frame
+
+    local knob = Instance.new("Frame")
+    knob.Size = UDim2.new(0, 18, 0, 18)
+    knob.Position = UDim2.new(0, 3, 0.5, -9)
+    knob.BackgroundColor3 = Theme.SubText
+    knob.BorderSizePixel = 0
+    knob.Parent = btn
+
+    local on = default or false
+    local function update()
+        if on then
+            TweenService:Create(btn, TweenInfo.new(0.2), { BackgroundColor3 = Theme.Accent }):Play()
+            TweenService:Create(knob, TweenInfo.new(0.2), {
+                Position = UDim2.new(1, -21, 0.5, -9),
+                BackgroundColor3 = Theme.Text,
+            }):Play()
+        else
+            TweenService:Create(btn, TweenInfo.new(0.2), { BackgroundColor3 = Theme.Card }):Play()
+            TweenService:Create(knob, TweenInfo.new(0.2), {
+                Position = UDim2.new(0, 3, 0.5, -9),
+                BackgroundColor3 = Theme.SubText,
+            }):Play()
+        end
+        if callback then
+            callback(on)
+        end
+    end
+    btn.MouseButton1Click:Connect(function()
+        on = not on
+        update()
+    end)
+    update()
+end
+
+local function createSlider(card, name, min, max, default, callback)
+    local frame = Instance.new("Frame")
+    frame.Name = name .. "Slider"
+    frame.Size = UDim2.new(1, 0, 0, 50)
+    frame.BackgroundTransparency = 1
+    frame.LayoutOrder = 10
+    frame.Parent = card
+
+    local label = Instance.new("TextLabel")
+    label.Size = UDim2.new(0.7, 0, 0, 20)
+    label.BackgroundTransparency = 1
+    label.Text = name
+    label.TextColor3 = Theme.SubText
+    label.TextSize = 13
+    label.Font = Font
+    label.TextXAlignment = Enum.TextXAlignment.Left
+    label.Parent = frame
+
+    local valueLabel = Instance.new("TextLabel")
+    valueLabel.Size = UDim2.new(0.3, 0, 0, 20)
+    valueLabel.Position = UDim2.new(0.7, 0, 0, 0)
+    valueLabel.BackgroundTransparency = 1
+    valueLabel.Text = tostring(default or min)
+    valueLabel.TextColor3 = Theme.Accent
+    valueLabel.TextSize = 13
+    valueLabel.Font = FontBold
+    valueLabel.TextXAlignment = Enum.TextXAlignment.Right
+    valueLabel.Parent = frame
+
+    local back = Instance.new("Frame")
+    back.Size = UDim2.new(1, 0, 0, 6)
+    back.Position = UDim2.new(0, 0, 0, 32)
+    back.BackgroundColor3 = Theme.Card
+    back.BorderSizePixel = 0
+    back.Parent = frame
+
+    local fill = Instance.new("Frame")
+    fill.Size = UDim2.new((default - min) / (max - min), 0, 1, 0)
+    fill.BackgroundColor3 = Theme.Accent
+    fill.BorderSizePixel = 0
+    fill.Parent = back
+
+    local dragging = false
+    local cur = default or min
+
+    local function update(input)
+        local pos = math.clamp((input.Position.X - back.AbsolutePosition.X) / back.AbsoluteSize.X, 0, 1)
+        cur = math.floor(min + (max - min) * pos)
+        valueLabel.Text = tostring(cur)
+        TweenService:Create(fill, TweenInfo.new(0.1), { Size = UDim2.new(pos, 0, 1, 0) }):Play()
+        if callback then
+            callback(cur)
+        end
+    end
+
+    back.InputBegan:Connect(function(input)
+        if input.UserInputType == Enum.UserInputType.MouseButton1 or
+            input.UserInputType == Enum.UserInputType.Touch then
+            dragging = true
+            update(input)
+        end
+    end)
+
+    back.InputEnded:Connect(function(input)
+        if input.UserInputType == Enum.UserInputType.MouseButton1 or
+            input.UserInputType == Enum.UserInputType.Touch then
+            dragging = false
+        end
+    end)
+
+    UserInputService.InputChanged:Connect(function(input)
+        if dragging and (input.UserInputType == Enum.UserInputType.MouseMovement or
+            input.UserInputType == Enum.UserInputType.Touch) then
+            update(input)
+        end
+    end)
+end
+
+local function createButton(card, name, callback)
+    local btn = Instance.new("TextButton")
+    btn.Name = name .. "Btn"
+    btn.Size = UDim2.new(1, 0, 0, 34)
+    btn.BackgroundColor3 = Theme.Card
+    btn.Text = name
+    btn.TextColor3 = Theme.Text
+    btn.TextSize = 13
+    btn.Font = Font
+    btn.AutoButtonColor = false
+    btn.LayoutOrder = 10
+    btn.BorderSizePixel = 0
+    btn.Parent = card
+    btn.MouseButton1Click:Connect(function()
+        if callback then
+            callback()
+        end
+    end)
+end
+
+local function createColorInput(card, name, defaultColor, callback)
+    local frame = Instance.new("Frame")
+    frame.Name = name .. "Color"
+    frame.Size = UDim2.new(1, 0, 0, 32)
+    frame.BackgroundTransparency = 1
+    frame.LayoutOrder = 11
+    frame.Parent = card
+
+    local label = Instance.new("TextLabel")
+    label.Size = UDim2.new(0.5, 0, 1, 0)
+    label.BackgroundTransparency = 1
+    label.Text = name .. " Цвет"
+    label.TextColor3 = Theme.SubText
+    label.TextSize = 13
+    label.Font = Font
+    label.TextXAlignment = Enum.TextXAlignment.Left
+    label.Parent = frame
+
+    local box = Instance.new("TextBox")
+    box.Size = UDim2.new(0.4, 0, 0, 26)
+    box.Position = UDim2.new(0.5, 0, 0.5, -13)
+    box.BackgroundColor3 = Theme.Card
+    box.TextColor3 = Theme.Text
+    local r = math.floor(defaultColor.R * 255)
+    local g = math.floor(defaultColor.G * 255)
+    local b = math.floor(defaultColor.B * 255)
+    box.Text = r .. "," .. g .. "," .. b
+    box.PlaceholderText = "R,G,B или #HEX"
+    box.PlaceholderColor3 = Theme.SubText
+    box.TextSize = 12
+    box.Font = Font
+    box.ClearTextOnFocus = false
+    box.BorderSizePixel = 0
+    box.Parent = frame
+
+    local preview = Instance.new("Frame")
+    preview.Size = UDim2.new(0, 20, 0, 20)
+    preview.Position = UDim2.new(0.92, 0, 0.5, -10)
+    preview.BackgroundColor3 = defaultColor
+    preview.BorderSizePixel = 1
+    preview.BorderColor3 = Theme.Stroke
+    preview.Parent = frame
+    Instance.new("UICorner", preview).CornerRadius = UDim.new(0, 4)
+
+    box.FocusLost:Connect(function(enterPressed)
+        if enterPressed then
+            local color = colorInputToColor3(box.Text)
+            if color then
+                preview.BackgroundColor3 = color
+                if callback then
+                    callback(color)
+                end
+            else
+                notify("Цвет", "Неверный формат!", 2)
+            end
+        end
+    end)
+end
+
+-- ========================================
+-- ЗАПОЛНЕНИЕ ВКЛАДОК
+-- ========================================
+-- Player
+local playerPage = TabPages["Player"]
+local playerCard = createCard(playerPage, "Player", 1)
+
+createSlider(playerCard, "Скорость", 0, 100, Settings.Speed, function(value)
+    Settings.Speed = value
+    if LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("Humanoid") then
+        LocalPlayer.Character.Humanoid.WalkSpeed = value
+    end
+end)
+
+createSlider(playerCard, "Прыжок", 0, 200, Settings.JumpPower, function(value)
+    Settings.JumpPower = value
+    if LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("Humanoid") then
+        LocalPlayer.Character.Humanoid.JumpPower = value
+    end
+end)
+
+createSlider(playerCard, "Размер", 0.1, 5, Settings.CharacterScale, function(value)
+    Settings.CharacterScale = value
+    if LocalPlayer.Character then
+        for _, part in ipairs(LocalPlayer.Character:GetDescendants()) do
+            if part:IsA("BasePart") and part.Name ~= "HumanoidRootPart" then
+                part.Size = part.Size * (value / Settings.CharacterScale)
+            end
+        end
+    end
+end)
+
+createToggle(playerCard, "Невидимость", Settings.Invisible, function(value)
+    Settings.Invisible = value
+    if LocalPlayer.Character then
+        for _, obj in ipairs(LocalPlayer.Character:GetDescendants()) do
+            if obj:IsA("BasePart") then
+                obj.LocalTransparencyModifier = value and 1 or 0
+            end
+        end
+    end
+end)
+
+createToggle(playerCard, "Полет", Settings.FlyEnabled, function(value)
+    Settings.FlyEnabled = value
+    if value then
+        startFly()
+    else
+        stopFly()
+    end
+end)
+
+createSlider(playerCard, "Скорость полета", 10, 200, Settings.FlySpeed, function(value)
+    Settings.FlySpeed = value
+end)
+
+createToggle(playerCard, "Анимация полета", Settings.FlyAnimation, function(value)
+    Settings.FlyAnimation = value
+end)
+
+createToggle(playerCard, "Беск. прыжок", Settings.InfiniteJump, function(value)
+    Settings.InfiniteJump = value
+end)
+
+createToggle(playerCard, "Noclip", Settings.NoclipEnabled, function(value)
+    Settings.NoclipEnabled = value
+    setupNoclip(value)
+end)
+
+createButton(playerCard, "Сбросить Player", function()
+    Settings.Speed = 16
+    Settings.JumpPower = 50
+    Settings.CharacterScale = 1
+    Settings.Invisible = false
+    Settings.FlyEnabled = false
+    Settings.FlySpeed = 50
+    Settings.FlyAnimation = false
+    Settings.InfiniteJump = false
+    Settings.NoclipEnabled = false
+
+    if LocalPlayer.Character then
+        local humanoid = LocalPlayer.Character:FindFirstChild("Humanoid")
+        if humanoid then
+            humanoid.WalkSpeed = 16
+            humanoid.JumpPower = 50
+        end
+        for _, obj in ipairs(LocalPlayer.Character:GetDescendants()) do
+            if obj:IsA("BasePart") then
+                obj.LocalTransparencyModifier = 0
+            end
+        end
+    end
+    stopFly()
+    setupNoclip(false)
+    notify("Сброс", "Player сброшен", 2)
+end)
+
+-- ESP
+local espPage = TabPages["ESP"]
+local espCard = createCard(espPage, "Подсветка", 1)
+
+createToggle(espCard, "ESP Мяч", Settings.BallESP, function(value)
+    Settings.BallESP = value
+    startMainUpdate()
+end)
+createColorInput(espCard, "Мяч", Settings.BallColor, function(value)
+    Settings.BallColor = value
+    startMainUpdate()
+end)
+
+createToggle(espCard, "ESP Игроки", Settings.PlayerESP, function(value)
+    Settings.PlayerESP = value
+    startMainUpdate()
+end)
+createColorInput(espCard, "Игроки", Settings.PlayerColor, function(value)
+    Settings.PlayerColor = value
+    startMainUpdate()
+end)
+
+-- Visual
+local visualPage = TabPages["Visual"]
+local visualCard = createCard(visualPage, "Визуал", 1)
+
+createToggle(visualCard, "Glow", Settings.GlowEnabled, function(value)
+    toggleGlow(value)
+end)
+
+createButton(visualCard, "Ясно", function()
+    applyWeather("Clear")
+end)
+createButton(visualCard, "Дождь", function()
+    applyWeather("Rain")
+end)
+createButton(visualCard, "Туман", function()
+    applyWeather("Fog")
+end)
+
+createToggle(visualCard, "Chams", Settings.ChamsEnabled, function(value)
+    Settings.ChamsEnabled = value
+    updateChamsForAll()
+    startMainUpdate()
+end)
+createColorInput(visualCard, "Chams", Settings.ChamsColor, function(value)
+    Settings.ChamsColor = value
+    if Settings.ChamsEnabled then
+        updateChamsForAll()
+    end
+end)
+
+createToggle(visualCard, "Круги прыжка", Settings.JumpCircles, function(value)
+    Settings.JumpCircles = value
+    startMainUpdate()
+end)
+createColorInput(visualCard, "Круги", Settings.JumpCirclesColor, function(value)
+    Settings.JumpCirclesColor = value
+end)
+
+createToggle(visualCard, "След", Settings.Trails, function(value)
+    Settings.Trails = value
+    if value then
+        createLocalPlayerTrail()
+    else
+        removeLocalPlayerTrail()
+    end
+    startMainUpdate()
+end)
+createColorInput(visualCard, "След", Settings.TrailsColor, function(value)
+    Settings.TrailsColor = value
+    updateTrailColor()
+end)
+
+createToggle(visualCard, "RGB Humanoid", Settings.RGBHumanoid, function(value)
+    Settings.RGBHumanoid = value
+    setupRGBHumanoid()
+end)
+
+createToggle(visualCard, "XRay", Settings.XRayEnabled, function(value)
+    Settings.XRayEnabled = value
+    setupXRay()
+end)
+
+createToggle(visualCard, "Bloom", Settings.BloomEnabled, function(value)
+    Settings.BloomEnabled = value
+    setupBloom(value)
+end)
+
+createToggle(visualCard, "Цветокорр", Settings.ColorCorrectionEnabled, function(value)
+    Settings.ColorCorrectionEnabled = value
+    setupColorCorrection(value)
+end)
+
+createToggle(visualCard, "Виньетка", Settings.VignetteEnabled, function(value)
+    Settings.VignetteEnabled = value
+    setupVignette(value)
+end)
+
+createToggle(visualCard, "Texture Pack", Settings.TexturePackEnabled, function(value)
+    Settings.TexturePackEnabled = value
+    if value then
+        applyTexturePack()
+    else
+        clearTexturePack()
+    end
+end)
+
+createToggle(visualCard, "Растяг", Settings.StretchEnabled, function(value)
+    applyStretch(value)
+end)
+createSlider(visualCard, "Сила растяга", 50, 100, 75, function(value)
+    Settings.StretchFactor = value / 100
+    if Settings.StretchEnabled then
+        applyStretch(true)
+    end
+end)
+
+createToggle(visualCard, "China Hat", Settings.ChinaHatEnabled, function(value)
+    toggleChinaHat(value)
+end)
+createColorInput(visualCard, "China Hat", Settings.ChinaHatColor, function(value)
+    Settings.ChinaHatColor = value
+end)
+createButton(visualCard, "Hat Classic", function()
+    hatChangeStyle("Classic")
+end)
+
+createToggle(visualCard, "Aura", Settings.AuraEnabled, function(value)
+    Settings.AuraEnabled = value
+    if value then
+        applyAura()
+    else
+        clearAura()
+    end
+end)
+createColorInput(visualCard, "Aura", Settings.AuraColor, function(value)
+    Settings.AuraColor = value
+    if Settings.AuraEnabled then
+        applyAura()
+    end
+end)
+
+for _, name in ipairs(AURA_ORDER) do
+    createToggle(visualCard, "Aura " .. name, AuraSelected[name], function(value)
+        AuraSelected[name] = value
+        if Settings.AuraEnabled then
+            applyAura()
+        end
+    end)
+end
+
+createToggle(visualCard, "Орбизы", Settings.OrbizEnabled, function(value)
+    Settings.OrbizEnabled = value
+    createOrbiz()
+end)
+
+createButton(visualCard, "Небо HD", function()
+    setupSky("HD")
+end)
+createButton(visualCard, "Небо Space", function()
+    setupSky("Space")
+end)
+createButton(visualCard, "Небо Galaxy", function()
+    setupSky("Galaxy")
+end)
+createButton(visualCard, "Удалить небо", removeSky)
+
+-- Teleport
+local teleportPage = TabPages["Teleport"]
+local teleportCard = createCard(teleportPage, "Телепорт", 1)
+
+createButton(teleportCard, "Tp к игроку", function()
+    if Settings.SelectedPlayer then
+        teleportToPlayer(Settings.SelectedPlayer)
+    end
+end)
+createButton(teleportCard, "Tp к мячу", function()
+    teleportToBall()
+end)
+
+local playerList = Instance.new("Frame")
+playerList.Size = UDim2.new(1, -20, 0, 120)
+playerList.BackgroundColor3 = Theme.Card
+playerList.BorderSizePixel = 0
+playerList.LayoutOrder = 10
+playerList.Parent = teleportPage
+
+local playerListLayout = Instance.new("UIListLayout")
+playerListLayout.Padding = UDim.new(0, 4)
+playerListLayout.Parent = playerList
+
+local function refreshPlayerList()
+    for _, obj in ipairs(playerList:GetChildren()) do
+        if obj:IsA("TextButton") then
+            obj:Destroy()
+        end
+    end
+    for _, player in ipairs(Players:GetPlayers()) do
+        if player ~= LocalPlayer then
+            local btn = Instance.new("TextButton")
+            btn.Size = UDim2.new(1, -10, 0, 26)
+            btn.BackgroundColor3 = Theme.Element
+            btn.Text = player.Name
+            btn.TextColor3 = Theme.Text
+            btn.TextSize = 12
+            btn.Font = Font
+            btn.Parent = playerList
+            btn.MouseButton1Click:Connect(function()
+                Settings.SelectedPlayer = player
+                notify("Выбор", "Выбран: " .. player.Name, 2)
+            end)
+        end
+    end
+end
+refreshPlayerList()
+Players.PlayerAdded:Connect(refreshPlayerList)
+Players.PlayerRemoving:Connect(refreshPlayerList)
+
+-- Fling
+local flingPage = TabPages["Fling"]
+local flingCard = createCard(flingPage, "Флинг", 1)
+
+createButton(flingCard, "Флинг выбранного", function()
+    if Settings.SelectedPlayer then
+        flingPlayer(Settings.SelectedPlayer)
+    end
+end)
+createButton(flingCard, "Флинг всех", flingAllPlayers)
+
+-- Combat (Blade Ball)
+local combatPage = TabPages["Combat"]
+local combatCard = createCard(combatPage, "Blade Ball", 1)
+
+createToggle(combatCard, "Auto Parry", Settings.AutoParry, function(value)
+    Settings.AutoParry = value
+    if value then startCombat() end
+end)
+createSlider(combatCard, "Parry Delay", 0.01, 0.5, Settings.ParryDelay, function(value)
+    Settings.ParryDelay = value
+end)
+createToggle(combatCard, "Auto Spam", Settings.AutoSpam, function(value)
+    Settings.AutoSpam = value
+    if value then startCombat() end
+end)
+createToggle(combatCard, "Auto Clash", Settings.AutoClash, function(value)
+    Settings.AutoClash = value
+    if value then startCombat() end
+end)
+createToggle(combatCard, "Auto Play", Settings.AutoPlay, function(value)
+    Settings.AutoPlay = value
+    if value then startCombat() end
+end)
+createToggle(combatCard, "Aimbot", Settings.AimbotEnabled, function(value)
+    Settings.AimbotEnabled = value
+    if value then startCombat() end
+end)
+
+-- Settings
+local settingsPage = TabPages["Settings"]
+local settingsCard = createCard(settingsPage, "Настройки", 1)
+
+createButton(settingsCard, "Тема Dark", function()
+    applyTheme("Dark")
+end)
+createButton(settingsCard, "Тема Blue", function()
+    applyTheme("Blue")
+end)
+createButton(settingsCard, "Тема Purple", function()
+    applyTheme("Purple")
+end)
+createButton(settingsCard, "Тема Green", function()
+    applyTheme("Green")
+end)
+createButton(settingsCard, "Тема Red", function()
+    applyTheme("Red")
+end)
+createButton(settingsCard, "Тема Gray", function()
+    applyTheme("Gray")
+end)
+
+createButton(settingsCard, "Язык RU", function()
+    Settings.Language = "RU"
+    notify("Язык", "Русский", 2)
+end)
+createButton(settingsCard, "Язык EN", function()
+    Settings.Language = "EN"
+    notify("Язык", "English", 2)
+end)
+
+createSlider(settingsCard, "Размер меню", 0.6, 1.5, Settings.MenuScale, function(value)
+    Settings.MenuScale = value
+    Main.Size = UDim2.new(0.8 * value, 0, 0.7 * value, 0)
+    Main.Position = UDim2.new(0.5, -0.4 * value, 0.5, -0.35 * value)
+end)
+
+createButton(settingsCard, "Сбросить настройки", function()
+    notify("Сброс", "Все настройки сброшены", 2)
+end)
+
+-- Bio
+local bioPage = TabPages["Bio"]
+local bioCard = createCard(bioPage, "Информация", 1)
+
+local function bioLabel(text)
+    local lbl = Instance.new("TextLabel")
+    lbl.Size = UDim2.new(1, -20, 0, 30)
+    lbl.BackgroundTransparency = 1
+    lbl.Text = text
+    lbl.TextColor3 = Theme.Text
+    lbl.TextSize = 14
+    lbl.Font = Font
+    lbl.TextXAlignment = Enum.TextXAlignment.Left
+    lbl.Parent = bioCard
+end
+
+bioLabel("🚀 SkyHub Blade Ball Edition")
+bioLabel("Автор: dont16383")
+bioLabel("📱 Telegram: @kazobl")
+bioLabel("📢 Telegram канал: @SkyHub_Deltax")
+bioLabel("💬 Discord: скоро")
+bioLabel("✨ Спасибо за использование!")
+
+-- ========================================
+-- ЗАПУСК ОСНОВНЫХ ЦИКЛОВ
+-- ========================================
+startMainUpdate()
+switchTab("Player")
+
+-- ========================================
+-- ОВЕРЛЕЙ FPS
+-- ========================================
+local overlayGui = Instance.new("ScreenGui")
+overlayGui.Name = "SkyHubOverlay"
+overlayGui.ResetOnSpawn = false
+overlayGui.IgnoreGuiInset = true
+overlayGui.ZIndexBehavior = Enum.ZIndexBehavior.Sibling
+overlayGui.DisplayOrder = 999
+overlayGui.Parent = PlayerGui
+
+local overlayHeader = Instance.new("Frame")
+overlayHeader.Name = "Header"
+overlayHeader.Size = UDim2.new(0, 150, 0, 30)
+overlayHeader.Position = UDim2.new(1, -160, 0, 10)
+overlayHeader.BackgroundColor3 = Color3.fromRGB(15, 15, 20)
+overlayHeader.BackgroundTransparency = 0.05
+overlayHeader.BorderSizePixel = 0
+overlayHeader.ClipsDescendants = true
+overlayHeader.Parent = overlayGui
+
+Instance.new("UICorner", overlayHeader).CornerRadius = UDim.new(1, 0)
+
+local overlayStroke = Instance.new("UIStroke")
+overlayStroke.Color = Color3.fromRGB(40, 40, 50)
+overlayStroke.Thickness = 1
+overlayStroke.Transparency = 0.5
+overlayStroke.Parent = overlayHeader
+
+local overlayTitle = Instance.new("TextLabel")
+overlayTitle.Size = UDim2.new(0, 48, 1, 0)
+overlayTitle.Position = UDim2.new(0, 4, 0, 0)
+overlayTitle.BackgroundTransparency = 1
+overlayTitle.Text = "SKYHUB"
+overlayTitle.TextColor3 = Color3.fromRGB(255, 255, 255)
+overlayTitle.TextSize = 12
+overlayTitle.Font = FontBold
+overlayTitle.TextXAlignment = Enum.TextXAlignment.Center
+overlayTitle.Parent = overlayHeader
+
+local sep1 = Instance.new("Frame")
+sep1.Size = UDim2.new(0, 1, 0, 16)
+sep1.Position = UDim2.new(0, 56, 0.5, -8)
+sep1.BackgroundColor3 = Color3.fromRGB(60, 60, 70)
+sep1.BorderSizePixel = 0
+sep1.Parent = overlayHeader
+
+local fpsLabel = Instance.new("TextLabel")
+fpsLabel.Size = UDim2.new(0, 38, 1, 0)
+fpsLabel.Position = UDim2.new(0, 61, 0, 0)
+fpsLabel.BackgroundTransparency = 1
+fpsLabel.Text = "60"
+fpsLabel.TextColor3 = Color3.fromRGB(180, 255, 180)
+fpsLabel.TextSize = 12
+fpsLabel.Font = Font
+fpsLabel.TextXAlignment = Enum.TextXAlignment.Center
+fpsLabel.Parent = overlayHeader
+
+local sep2 = Instance.new("Frame")
+sep2.Size = UDim2.new(0, 1, 0, 16)
+sep2.Position = UDim2.new(0, 103, 0.5, -8)
+sep2.BackgroundColor3 = Color3.fromRGB(60, 60, 70)
+sep2.BorderSizePixel = 0
+sep2.Parent = overlayHeader
+
+local freeLabel = Instance.new("TextLabel")
+freeLabel.Size = UDim2.new(0, 40, 1, 0)
+freeLabel.Position = UDim2.new(0, 108, 0, 0)
+freeLabel.BackgroundTransparency = 1
+freeLabel.Text = "Free"
+freeLabel.TextColor3 = Color3.fromRGB(150, 255, 150)
+freeLabel.TextSize = 11
+freeLabel.Font = Font
+freeLabel.TextXAlignment = Enum.TextXAlignment.Center
+freeLabel.Parent = overlayHeader
+
+overlayHeader.MouseButton1Click:Connect(function()
+    Container.Visible = not Container.Visible
+    if Container.Visible then
+        switchTab("Player")
+    end
+end)
+
+-- FPS counter update
+local frameCount = 0
+local lastTime = tick()
+RunService.RenderStepped:Connect(function()
+    frameCount = frameCount + 1
+    local currentTime = tick()
+    if currentTime - lastTime >= 1 then
+        local fps = math.floor(frameCount / (currentTime - lastTime))
+        fpsLabel.Text = fps
+        if fps >= 60 then
+            fpsLabel.TextColor3 = Color3.fromRGB(180, 255, 180)
+        elseif fps >= 30 then
+            fpsLabel.TextColor3 = Color3.fromRGB(255, 255, 150)
+        else
+            fpsLabel.TextColor3 = Color3.fromRGB(255, 150, 150)
+        end
+        frameCount = 0
+        lastTime = currentTime
+    end
+end)
+
+-- Overlay dragging
+local overlayDrag = { dragging = false, startPos = nil, dragStart = nil }
+
+overlayHeader.InputBegan:Connect(function(input)
+    if input.UserInputType == Enum.UserInputType.MouseButton1 or
+        input.UserInputType == Enum.UserInputType.Touch then
+        overlayDrag.dragging = true
+        overlayDrag.dragStart = input.Position
+        overlayDrag.startPos = overlayHeader.Position
+    end
+end)
+
+overlayHeader.InputChanged:Connect(function(input)
+    if overlayDrag.dragging and (input.UserInputType == Enum.UserInputType.MouseMovement or
+        input.UserInputType == Enum.UserInputType.Touch) then
+        local delta = input.Position - overlayDrag.dragStart
+        overlayHeader.Position = UDim2.new(
+            overlayDrag.startPos.X.Scale,
+            overlayDrag.startPos.X.Offset + delta.X,
+            overlayDrag.startPos.Y.Scale,
+            overlayDrag.startPos.Y.Offset + delta.Y
+        )
+    end
+end)
+
+overlayHeader.InputEnded:Connect(function(input)
+    if input.UserInputType == Enum.UserInputType.MouseButton1 or
+        input.UserInputType == Enum.UserInputType.Touch then
+        overlayDrag.dragging = false
+    end
+end)
+
+-- Mini icon also opens menu
+Mini.MouseButton1Click:Connect(function()
+    Main.Visible = true
+    Mini.Visible = false
+    switchTab("Player")
+end)
+
+-- ========================================
+-- ЗАКРЫВАЕМ ЗАГРУЗОЧНЫЙ ЭКРАН И ОТКРЫВАЕМ МЕНЮ
+-- ========================================
+task.wait(0.3)
+LoadGui:Destroy()
+
+notify("SkyHub", "Blade Ball Edition загружен!", 2)
+print("✅ SKYHUB BLADE BALL EDITION LOADED!")
+
+Container.Visible = true
+Main.Visible = true
+Mini.Visible = false
+switchTab("Player")
